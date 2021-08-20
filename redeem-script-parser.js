@@ -8,7 +8,10 @@ const isValidNetwork = (network) => {
 };
 
 const getFederationRedeemScript = (powpegBtcPublicKeys) => {
-    let defaultPubkeys = powpegBtcPublicKeys.map(hex => Buffer.from(hex, 'hex'));
+    if (!powpegBtcPublicKeys || !(powpegBtcPublicKeys instanceof Array)) {
+        throw new Error("powpegBtcPublicKeys should be an array");
+    }
+    let defaultPubkeys = powpegBtcPublicKeys.map(hex => hex instanceof Buffer ? hex: Buffer.from(hex, 'hex'));
     return bitcoin.payments.p2ms({ m: parseInt(defaultPubkeys.length / 2) + 1, pubkeys: defaultPubkeys }).output;
 };
 
@@ -27,31 +30,31 @@ const getErpRedeemScript = (network, powpegBtcPublicKeys) => {
     let bufferLength = 1 + defaultRedeemScriptWithouCheckMultisig.length / 2 + 2 + csvValue.length / 2 + 2 + erpRedeemScriptWithoutCheckMultisig.length / 2 + 2;
 
     let erpRedeemScript = Buffer.alloc(bufferLength);
-    erpRedeemScript.write('64', 'hex');
+    erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_NOTIF), 'hex');
     erpRedeemScript.write(defaultRedeemScriptWithouCheckMultisig, 1, 'hex');
     let position = 1 + defaultRedeemScriptWithouCheckMultisig.length / 2;
-    erpRedeemScript.write('67', position, 'hex');
+    erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ELSE), position, 'hex');
     position+= 1;
     erpRedeemScript.write('02', position, 'hex');
     position+= 1;
     erpRedeemScript.write(csvValue, position, 'hex');
     position+= csvValue.length / 2;
-    erpRedeemScript.write("b2", position, 'hex');
+    erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_CHECKSEQUENCEVERIFY), position, 'hex');
     position+= 1;
-    erpRedeemScript.write("75", position, 'hex');
+    erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_DROP), position, 'hex');
     position+= 1;
     erpRedeemScript.write(erpRedeemScriptWithoutCheckMultisig, position, 'hex');
     position+= erpRedeemScriptWithoutCheckMultisig.length / 2;
-    erpRedeemScript.write('68', position, 'hex');
+    erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ENDIF), position, 'hex');
     position+= 1;
-    erpRedeemScript.write('ae', position, 'hex');
+    erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_CHECKMULTISIG), position, 'hex');
 
     return Buffer.from(erpRedeemScript, 'hex');
 }
 
 const getFlyoverPrefix = (derivationArgsHash) => {
-    if (!derivationArgsHash || derivationArgsHash.length < 32) {
-        throw new Error("derivationArgsHash must be hash represented as a 32 characters string");
+    if (!derivationArgsHash || derivationArgsHash.length !== 64) {
+        throw new Error("derivationArgsHash must be hash represented as a 64 characters string");
     }
     let prefix = Buffer.alloc(34);
     prefix.write('20', 'hex'); // hash length
@@ -119,7 +122,7 @@ erpPubkeysLists[NETWORKS.REGTEST] = [
 const csvValues = {};
 csvValues[NETWORKS.MAINNET] = 'CD50'; // 52560 in hexa
 csvValues[NETWORKS.TESTNET] = 'CD50';
-csvValues[NETWORKS.REGTEST] = '01F4';
+csvValues[NETWORKS.REGTEST] = '01F4'; // 500 in hexa
 
 module.exports = {
     getFederationRedeemScript,
