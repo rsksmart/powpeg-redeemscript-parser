@@ -1,0 +1,22 @@
+{
+  "name": "powpeg-redeemscript-parser",
+  "version": "0.1.0",
+  "description": "",
+  "main": "redeem-script-parser.js",
+  "scripts": {
+    "test": "mocha",
+    "test-coverage": "nyc --check-coverage  --branches 100 --statements 100 --lines 100 mocha test/*.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bitcoinjs-lib": "^5.2.0"
+  },
+  "devDependencies": {
+    "@rsksmart/rsk-precompiled-abis": "^4.0.0-IRIS",
+    "chai": "^4.3.4",
+    "mocha": "^7.2.0",
+    "nyc": "^15.1.0",
+    "web3": "^1.5.2"
+  }
+}
