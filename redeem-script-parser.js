@@ -11,7 +11,10 @@ const getFederationRedeemScript = (powpegBtcPublicKeys) => {
     if (!powpegBtcPublicKeys || !(powpegBtcPublicKeys instanceof Array)) {
         throw new Error("powpegBtcPublicKeys should be an array");
     }
-    let defaultPubkeys = powpegBtcPublicKeys.map(hex => hex instanceof Buffer ? hex: Buffer.from(hex, 'hex'));
+    // Parse to Buffer and sort keys
+    let defaultPubkeys = powpegBtcPublicKeys
+        .map(hex => hex instanceof Buffer ? hex: Buffer.from(hex, 'hex'))
+        .sort((a, b) => a.compare(b));
     return bitcoin.payments.p2ms({ m: parseInt(defaultPubkeys.length / 2) + 1, pubkeys: defaultPubkeys }).output;
 };
 
@@ -80,6 +83,10 @@ const getFlyoverRedeemScript = (powpegBtcPublicKeys, derivationArgsHash) => {
 
 const getAddressFromRedeemSript = (network, redeemScript) => {
     isValidNetwork(network);
+
+    if (!redeemScript || !(redeemScript instanceof Buffer)) {
+        throw new Error("redeemScript must be a Buffer");
+    }
 
     let doubleHash = bitcoin.crypto.ripemd160(bitcoin.crypto.sha256(redeemScript));
     return bitcoin.address.toBase58Check(doubleHash, bitcoinjsNetworks[network].scriptHash);
