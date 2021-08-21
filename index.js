@@ -7,7 +7,7 @@ const isValidNetwork = (network) => {
     return true;
 };
 
-const getFederationRedeemScript = (powpegBtcPublicKeys) => {
+const getPowpegRedeemScript = (powpegBtcPublicKeys) => {
     if (!powpegBtcPublicKeys || !(powpegBtcPublicKeys instanceof Array)) {
         throw new Error("powpegBtcPublicKeys should be an array");
     }
@@ -27,7 +27,7 @@ const getErpRedeemScript = (network, powpegBtcPublicKeys) => {
     let erpRedeemScriptBuff = bitcoin.payments.p2ms({ m: parseInt(erpPubKeys.length / 2) + 1, pubkeys: erpPubKeys });
     
     // Remove OP_CHECKMULTISIG from redeem scripts
-    let defaultRedeemScriptWithouCheckMultisig = getFederationRedeemScript(powpegBtcPublicKeys).toString('hex').slice(0, -2);
+    let defaultRedeemScriptWithouCheckMultisig = getPowpegRedeemScript(powpegBtcPublicKeys).toString('hex').slice(0, -2);
     let erpRedeemScriptWithoutCheckMultisig = erpRedeemScriptBuff.output.toString('hex').slice(0, -2);
 
     let bufferLength = 1 + defaultRedeemScriptWithouCheckMultisig.length / 2 + 2 + csvValue.length / 2 + 2 + erpRedeemScriptWithoutCheckMultisig.length / 2 + 2;
@@ -77,7 +77,7 @@ const getFlyoverErpRedeemScript = (network, powpegBtcPublicKeys, derivationArgsH
 const getFlyoverRedeemScript = (powpegBtcPublicKeys, derivationArgsHash) => {
     return Buffer.concat([
         getFlyoverPrefix(derivationArgsHash), 
-        getFederationRedeemScript(powpegBtcPublicKeys)
+        getPowpegRedeemScript(powpegBtcPublicKeys)
     ]);
 }
 
@@ -132,7 +132,7 @@ csvValues[NETWORKS.TESTNET] = 'CD50';
 csvValues[NETWORKS.REGTEST] = '01F4'; // 500 in hexa
 
 module.exports = {
-    getFederationRedeemScript,
+    getPowpegRedeemScript,
     getErpRedeemScript,
     getFlyoverRedeemScript,
     getFlyoverErpRedeemScript,

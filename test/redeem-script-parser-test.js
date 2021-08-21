@@ -1,4 +1,4 @@
-const redeemScriptParser = require('../redeem-script-parser');
+const redeemScriptParser = require('../index');
 const crypto = require('crypto');
 const opcodes = require('bitcoinjs-lib').script.OPS;
 const EcPair = require('bitcoinjs-lib').ECPair;
@@ -13,10 +13,10 @@ const checkPksIncludedInRedeemScript = (pks, rs) => {
     }
 };
 
-describe('getFederationRedeemScript', () => {
+describe('getPowpegRedeemScript', () => {
     it ('should fail for invalid data', () => {
-        expect(() => redeemScriptParser.getFederationRedeemScript(null)).to.throw;
-        expect(() => redeemScriptParser.getFederationRedeemScript('a-string')).to.throw;
+        expect(() => redeemScriptParser.getPowpegRedeemScript(null)).to.throw;
+        expect(() => redeemScriptParser.getPowpegRedeemScript('a-string')).to.throw;
     });
 
     it('should return a valid redeem script', () => {
@@ -25,7 +25,7 @@ describe('getFederationRedeemScript', () => {
             '0362634ab57dae9cb373a5d536e66a8c4f67468bbcfb063809bab643072d78a124',
             '03c5946b3fbae03a654237da863c9ed534e0878657175b132b8ca630f245df04db',
         ];
-        let rs = redeemScriptParser.getFederationRedeemScript(pks).toString('hex');
+        let rs = redeemScriptParser.getPowpegRedeemScript(pks).toString('hex');
         // First byte is M (pks.length / 2 + 1)
         expect(rs.substring(0,2)).to.be.eq(decimalToHexString(opcodes.OP_2));
         // Second to last byte is N (pks.length)
@@ -35,7 +35,7 @@ describe('getFederationRedeemScript', () => {
 
         // Sort descending
         pks = pks.sort((a, b) => b > a);
-        let otherRs = redeemScriptParser.getFederationRedeemScript(pks).toString('hex');
+        let otherRs = redeemScriptParser.getPowpegRedeemScript(pks).toString('hex');
         expect(rs).to.be.eq(otherRs);
     });
 });
@@ -123,7 +123,7 @@ describe('getAddressFromRedeemSript', () => {
             '03c5946b3fbae03a654237da863c9ed534e0878657175b132b8ca630f245df04db',
         ];
         let expectedPowpegAddress = '2N5muMepJizJE1gR7FbHJU6CD18V3BpNF9p';
-        let rs = redeemScriptParser.getFederationRedeemScript(pks);
+        let rs = redeemScriptParser.getPowpegRedeemScript(pks);
         expect(redeemScriptParser.getAddressFromRedeemSript(redeemScriptParser.NETWORKS.REGTEST, rs)).to.be.eq(expectedPowpegAddress);
     });
 });

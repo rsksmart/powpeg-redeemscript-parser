@@ -1,4 +1,4 @@
-let redeemScriptParser = require('../redeem-script-parser');
+let redeemScriptParser = require('../index');
 let bridge = require('@rsksmart/rsk-precompiled-abis').bridge;
 let web3 = require('web3');
 let crypto = require('crypto');
@@ -20,7 +20,7 @@ let crypto = require('crypto');
     let network = redeemScriptParser.NETWORKS.MAINNET;
     console.log('powpeg redeemscript parser data:')
 
-    let powpegRedeemScript = redeemScriptParser.getFederationRedeemScript(powpegPublicKeys);
+    let powpegRedeemScript = redeemScriptParser.getPowpegRedeemScript(powpegPublicKeys);
     console.log('powpeg redeem script', powpegRedeemScript.toString('hex'));
     console.log('powpeg address', redeemScriptParser.getAddressFromRedeemSript(network, powpegRedeemScript));
 

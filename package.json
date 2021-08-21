@@ -2,7 +2,7 @@
   "name": "powpeg-redeemscript-parser",
   "version": "0.1.0",
   "description": "",
-  "main": "redeem-script-parser.js",
+  "main": "index.js",
   "scripts": {
     "test": "mocha",
     "test-coverage": "nyc --check-coverage  --branches 100 --statements 100 --lines 100 mocha test/*.js"
