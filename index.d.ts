@@ -13,10 +13,11 @@ export function getPowpegRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>)
 
 /**
  * generates custom ERP redeemscript, also uses getPowpegRedeemScript to generate base redeemScript
- * @param network network is used to select the proper ERP constants
  * @param powpegBtcPublicKeys Array of pegnatories public keys to get redeemScript
+ * @param erpBtcPublicKeys Array of erp federation public keys to get redeemScript
+ * @param csvValue CSV value to get redeemScript
  */
-export function getErpRedeemScript(network: NETWORKS, powpegBtcPublicKeys: Array<string|Buffer>): Buffer;
+export function getErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, erpBtcPublicKeys: Array<string|Buffer>, csvValue: string): Buffer;
 
 /**
  * generates a Flyover prefix and prepends it to the redeemscript generated through getPowpegRedeemScript
@@ -28,11 +29,12 @@ export function getFlyoverRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>
 
 /**
  * generates a Flyover prefix generates, then a custom ERP Flyover redeemscript, also uses getPowpegRedeemScript to generate base redeemScript
- * @param network network is used to select the proper ERP constants
  * @param powpegBtcPublicKeys Array of pegnatories public keys to get redeemScript
+ * @param erpBtcPublicKeys Array of erp federation public keys to get redeemScript
+ * @param csvValue CSV value to get redeemScript
  * @param derivationArgsHash String of 64 characters representing a derivation hash for Flyover protocol
  */
- export function getErpFlyoverRedeemScript(network: NETWORKS, powpegBtcPublicKeys: Array<string|Buffer>, derivationArgsHash: string): Buffer;
+ export function getFlyoverErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, erpBtcPublicKeys: Array<string|Buffer>, csvValue: string, derivationArgsHash: string): Buffer;
 
  /**
   * generates a p2sh BTC address for the parameterized network using the parameterized redeemscript
