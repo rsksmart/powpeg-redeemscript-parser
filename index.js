@@ -1,15 +1,20 @@
 const bitcoin = require('bitcoinjs-lib');
-const constants = require('./constants');
+
+const NETWORKS = {
+    MAINNET: 'MAINNET',
+    TESTNET: 'TESTNET',
+    REGTEST: 'REGTEST'
+}
 
 const bitcoinjsNetworks = {};
-bitcoinjsNetworks[constants.NETWORKS.MAINNET] = bitcoin.networks.bitcoin;
-bitcoinjsNetworks[constants.NETWORKS.TESTNET] = bitcoin.networks.testnet;
-bitcoinjsNetworks[constants.NETWORKS.REGTEST] = bitcoin.networks.regtest;
+bitcoinjsNetworks[NETWORKS.MAINNET] = bitcoin.networks.bitcoin;
+bitcoinjsNetworks[NETWORKS.TESTNET] = bitcoin.networks.testnet;
+bitcoinjsNetworks[NETWORKS.REGTEST] = bitcoin.networks.regtest;
 
 const numberToHexString = (number) => number.toString(16);
 
 const isValidNetwork = (network) => {
-    if (!constants.NETWORKS[network]) {
+    if (!NETWORKS[network]) {
         throw new Error(`Network ${network} is not valid value (valid values are: ${Object.keys(NETWORKS)})`);
     }
     return true;
@@ -26,24 +31,29 @@ const getPowpegRedeemScript = (powpegBtcPublicKeys) => {
     return bitcoin.payments.p2ms({ m: parseInt(defaultPubkeys.length / 2) + 1, pubkeys: defaultPubkeys }).output;
 };
 
-const getErpRedeemScript = (network, powpegBtcPublicKeys) => {
-    isValidNetwork(network);
+const getErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue) => {
 
-    let erpPubKeys = constants.erpPubkeysLists[network].map(hex => Buffer.from(hex, 'hex'));
-    let csvValue = constants.csvValues[network];
-
+    let erpPubKeys = erpBtcPublicKeys.map(hex => Buffer.from(hex, 'hex'));
     let erpRedeemScriptBuff = bitcoin.payments.p2ms({ m: parseInt(erpPubKeys.length / 2) + 1, pubkeys: erpPubKeys });
     
     // Remove OP_CHECKMULTISIG from redeem scripts
-    let defaultRedeemScriptWithouCheckMultisig = getPowpegRedeemScript(powpegBtcPublicKeys).toString('hex').slice(0, -2);
+    let defaultRedeemScriptWithoutCheckMultisig = getPowpegRedeemScript(powpegBtcPublicKeys).toString('hex').slice(0, -2);
     let erpRedeemScriptWithoutCheckMultisig = erpRedeemScriptBuff.output.toString('hex').slice(0, -2);
 
-    let bufferLength = 1 + defaultRedeemScriptWithouCheckMultisig.length / 2 + 2 + csvValue.length / 2 + 2 + erpRedeemScriptWithoutCheckMultisig.length / 2 + 2;
+    let bufferLength = parseInt(
+        1 + 
+        defaultRedeemScriptWithoutCheckMultisig.length / 2 + 
+        2 + 
+        csvValue.length / 2 + 
+        2 + 
+        erpRedeemScriptWithoutCheckMultisig.length / 2 + 
+        2
+    );
 
     let erpRedeemScript = Buffer.alloc(bufferLength);
     erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_NOTIF), 'hex');
-    erpRedeemScript.write(defaultRedeemScriptWithouCheckMultisig, 1, 'hex');
-    let position = 1 + defaultRedeemScriptWithouCheckMultisig.length / 2;
+    erpRedeemScript.write(defaultRedeemScriptWithoutCheckMultisig, 1, 'hex');
+    let position = 1 + parseInt(defaultRedeemScriptWithoutCheckMultisig.length / 2);
     erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ELSE), position, 'hex');
     position+= 1;
     erpRedeemScript.write('02', position, 'hex');
@@ -75,10 +85,10 @@ const getFlyoverPrefix = (derivationArgsHash) => {
     return prefix;
 };
 
-const getFlyoverErpRedeemScript = (network, powpegBtcPublicKeys, derivationArgsHash) => {
+const getFlyoverErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue, derivationArgsHash) => {
     return Buffer.concat([
         getFlyoverPrefix(derivationArgsHash), 
-        getErpRedeemScript(network, powpegBtcPublicKeys)
+        getErpRedeemScript(powpegBtcPublicKeys, erpBtcPublicKeys, csvValue)
     ]);
 }
 
@@ -106,5 +116,5 @@ module.exports = {
     getFlyoverRedeemScript,
     getFlyoverErpRedeemScript,
     getAddressFromRedeemSript,
-    NETWORKS: constants.NETWORKS,
+    NETWORKS: NETWORKS
 };

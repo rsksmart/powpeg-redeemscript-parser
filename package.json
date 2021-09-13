@@ -1,6 +1,6 @@
 {
   "name": "powpeg-redeemscript-parser",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "bitcoinjs-lib": "^5.2.0"
   },
   "devDependencies": {
-    "@rsksmart/rsk-precompiled-abis": "^4.0.0-IRIS",
+    "@rsksmart/rsk-precompiled-abis": "^4.0.2-IRIS",
     "chai": "^4.3.4",
     "mocha": "^7.2.0",
     "nyc": "^15.1.0",
