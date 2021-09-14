@@ -1,3 +1,7 @@
+# Disclaimer
+
+This is a beta version until audited by the security team. Any comments or suggestions feel free to contribute or reach out at our [open slack](https://developers.rsk.co/slack).
+
 # powpeg-redeemscript-parser
 
 This library helps obtaining the redeem script of the RSK powpeg as well as generating its address.
@@ -24,11 +28,11 @@ This methods takes the parameterized powpegBtcPublicKeys, sorts them ascending a
 ### getErpRedeemScript
 
 ```
-function getErpRedeemScript(network: NETWORKS, powpegBtcPublicKeys: Array<string|Buffer>): Buffer;
+function getErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, erpBtcPublicKeys: Array<string|Buffer>, csvValue: string): Buffer;
 ```
 
 Generates an ERP powpeg redeemscript. (this will become the default after the first powpeg change after IRIS)
-This method uses internal constants depending on the network parameter to determine the emergency multisig public keys and the delay value. Using those values generates the ERP redeeemscript.
+This method takes the parameterized powpegBtcPublicKeys, the emergency multisig public keys, and the delay value to generate the ERP redeeemscript.
 
 ### getFlyoverRedeemScript
 
@@ -42,7 +46,7 @@ This method expects a derivation arguments hash that represents the flyover prot
 ### getErpFlyoverRedeemScript
 
 ```
-function getErpFlyoverRedeemScript(network: NETWORKS, powpegBtcPublicKeys: Array<string|Buffer>, derivationArgsHash: string): Buffer;
+function getErpFlyoverRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, erpBtcPublicKeys: Array<string|Buffer>, csvValue: string, derivationArgsHash: string): Buffer;
 ```
 
 Generates an ERP Flyover redeemscript. (this will be the default for Flyover protocol operations after the first Powpeg change after IRIS)
