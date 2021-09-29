@@ -1,3 +1,5 @@
+[![CI/CD Using Github actions workflow](https://github.com/rsksmart/powpeg-redeemscript-parser/actions/workflows/workflow.yml/badge.svg)](https://github.com/rsksmart/powpeg-redeemscript-parser/actions/workflows/workflow.yml)
+
 # Disclaimer
 
 This is a beta version until audited by the security team. Any comments or suggestions feel free to contribute or reach out at our [open slack](https://developers.rsk.co/slack).
