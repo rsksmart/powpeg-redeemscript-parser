@@ -62,8 +62,8 @@ const validateErpRedeemScriptFormat = (erpRedeemScript, pubKeys, erpPubKeys) => 
 
 describe('getPowpegRedeemScript', () => {
     it ('should fail for invalid data', () => {
-        expect(() => redeemScriptParser.getPowpegRedeemScript(null)).to.throw;
-        expect(() => redeemScriptParser.getPowpegRedeemScript('a-string')).to.throw;
+        expect(() => redeemScriptParser.getPowpegRedeemScript(null)).to.throw();
+        expect(() => redeemScriptParser.getPowpegRedeemScript('a-string')).to.throw();
     });
 
     it('should return a valid redeem script', () => {
