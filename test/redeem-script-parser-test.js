@@ -117,33 +117,63 @@ describe('getErpRedeemScript', () => {
     });
 });
 
-describe('getFlyoverRedeemScript', () => {
+describe('getFlyoverRedeemScriptFromPublicKeys', () => {
     let dHash = crypto.randomBytes(32).toString('hex');
     let publicKeys = [getRandomPubkey(), getRandomPubkey(), getRandomPubkey()];
     
     it('should fail for invalid data', () => {    
         // fail because there is no derivation hash
-        expect(() => redeemScriptParser.getFlyoverRedeemScript(null)).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
-        expect(() => redeemScriptParser.getFlyoverRedeemScript(null, null)).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
-        expect(() => redeemScriptParser.getFlyoverRedeemScript(publicKeys, null)).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
-        expect(() => redeemScriptParser.getFlyoverRedeemScript(publicKeys, '')).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(null)).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(null, null)).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, null)).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, '')).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
         // a short hash
-        expect(() => redeemScriptParser.getFlyoverRedeemScript(publicKeys, dHash.substring(1))).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, dHash.substring(1))).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
         // a long hash
-        expect(() => redeemScriptParser.getFlyoverRedeemScript(publicKeys, dHash.concat('1'))).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, dHash.concat('1'))).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
         
         // fail because there are no public keys
-        expect(() => redeemScriptParser.getFlyoverRedeemScript(null, dHash)).to.throw('powpegBtcPublicKeys should be an array');
-        expect(() => redeemScriptParser.getFlyoverRedeemScript('', dHash)).to.throw('powpegBtcPublicKeys should be an array');
-        expect(() => redeemScriptParser.getFlyoverRedeemScript(getRandomPubkey(), dHash)).to.throw('powpegBtcPublicKeys should be an array');
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(null, dHash)).to.throw('powpegBtcPublicKeys should be an array');
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys('', dHash)).to.throw('powpegBtcPublicKeys should be an array');
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(getRandomPubkey(), dHash)).to.throw('powpegBtcPublicKeys should be an array');
     });
 
     it('should return a valid flyover redeem script', () => {
-        let redeemScript = redeemScriptParser.getFlyoverRedeemScript(publicKeys, dHash).toString('hex');
+        let redeemScript = redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, dHash).toString('hex');
         checkPubKeysIncludedInRedeemScript(publicKeys, redeemScript);
         expect(redeemScript.indexOf(dHash)).to.be.above(0);
     });
 });
+
+describe('getFlyoverRedeemScript', () => {
+    let dHash = crypto.randomBytes(32).toString('hex');
+    let publicKeys = [getRandomPubkey(), getRandomPubkey()];
+    let redeemScript = redeemScriptParser.getPowpegRedeemScript(publicKeys);
+
+    it('should fail for invalid data', () => {
+        // fail because there is no redeem script
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(null)).to.throw('powpegRedeemScript must be a Buffer');
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(null, null)).to.throw('powpegRedeemScript must be a Buffer');
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(null, dHash)).to.throw('powpegRedeemScript must be a Buffer');
+        expect(() => redeemScriptParser.getFlyoverRedeemScript('', dHash)).to.throw('powpegRedeemScript must be a Buffer');
+        expect(() => redeemScriptParser.getFlyoverRedeemScript('not-a-buffer', dHash)).to.throw('powpegRedeemScript must be a Buffer');
+        
+        // fail because there is no derivation hash
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(redeemScript, null)).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(redeemScript, '')).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        // a short hash
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(redeemScript, dHash.substring(1))).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        // a long hash
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(redeemScript, dHash.concat('1'))).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+    });
+
+    it('should return a valid flyover redeem script', () => {
+        let flyoverRedeemScript = redeemScriptParser.getFlyoverRedeemScript(redeemScript, dHash).toString('hex');
+        checkPubKeysIncludedInRedeemScript(publicKeys, flyoverRedeemScript);
+        expect(flyoverRedeemScript.indexOf(dHash)).to.be.above(0);
+    });
+});
+
 
 describe('getFlyoverErpRedeemScript', () => {
     let publicKeys = [
