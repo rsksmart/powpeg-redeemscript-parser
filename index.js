@@ -32,7 +32,16 @@ const getPowpegRedeemScript = (powpegBtcPublicKeys) => {
 };
 
 const getErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue) => {
-
+    if (!powpegBtcPublicKeys || !(powpegBtcPublicKeys instanceof Array)) {
+        throw new Error("powpegBtcPublicKeys should be an array");
+    }
+    if (!erpBtcPublicKeys || !(erpBtcPublicKeys instanceof Array)) {
+        throw new Error("erpBtcPublicKeys should be an array");
+    }
+    if (!csvValue || csvValue.length === 0) {
+        throw new Error("csvValue is required");
+    }
+    
     let erpPubKeys = erpBtcPublicKeys.map(hex => Buffer.from(hex, 'hex'));
     let erpRedeemScriptBuff = bitcoin.payments.p2ms({ m: parseInt(erpPubKeys.length / 2) + 1, pubkeys: erpPubKeys });
     

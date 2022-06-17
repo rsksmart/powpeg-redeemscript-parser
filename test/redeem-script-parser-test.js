@@ -62,8 +62,8 @@ const validateErpRedeemScriptFormat = (erpRedeemScript, pubKeys, erpPubKeys) => 
 
 describe('getPowpegRedeemScript', () => {
     it ('should fail for invalid data', () => {
-        expect(() => redeemScriptParser.getPowpegRedeemScript(null)).to.throw();
-        expect(() => redeemScriptParser.getPowpegRedeemScript('a-string')).to.throw();
+        expect(() => redeemScriptParser.getPowpegRedeemScript(null)).to.throw('powpegBtcPublicKeys should be an array');
+        expect(() => redeemScriptParser.getPowpegRedeemScript('a-string')).to.throw('powpegBtcPublicKeys should be an array');
     });
 
     it('should return a valid redeem script', () => {
@@ -83,82 +83,104 @@ describe('getPowpegRedeemScript', () => {
 });
 
 describe('getErpRedeemScript', () => {
+    let publicKeys = [
+        getRandomPubkey(),
+        getRandomPubkey(),
+        getRandomPubkey()
+    ];
+    let erpPublicKeys = [
+        getRandomPubkey(),
+        getRandomPubkey(),
+    ];
+    let csvValue = 'cd50';
+
     it('fails for invalid data', () => {
-        expect(() => redeemScriptParser.getErpRedeemScript()).to.throw();
-        expect(() => redeemScriptParser.getErpRedeemScript('nothing')).to.throw();
-        expect(() => redeemScriptParser.getErpRedeemScript([getRandomPubkey()], null, null)).to.throw();
+        // fail because there are no powpeg public keys
+        expect(() => redeemScriptParser.getErpRedeemScript()).to.throw('powpegBtcPublicKeys should be an array');
+        expect(() => redeemScriptParser.getErpRedeemScript(null)).to.throw('powpegBtcPublicKeys should be an array');
+        expect(() => redeemScriptParser.getErpRedeemScript('nothing')).to.throw('powpegBtcPublicKeys should be an array');
+        expect(() => redeemScriptParser.getErpRedeemScript(null, null, null)).to.throw('powpegBtcPublicKeys should be an array');
+
+        // fail because there are no erp public keys
+        expect(() => redeemScriptParser.getErpRedeemScript(publicKeys, null, null)).to.throw('erpBtcPublicKeys should be an array');
+        expect(() => redeemScriptParser.getErpRedeemScript(publicKeys, '', null)).to.throw('erpBtcPublicKeys should be an array');
+        expect(() => redeemScriptParser.getErpRedeemScript(publicKeys, getRandomPubkey(), null)).to.throw('erpBtcPublicKeys should be an array');
+
+        // fail because there is no csv value
+        expect(() => redeemScriptParser.getErpRedeemScript(publicKeys, erpPublicKeys, null)).to.throw('csvValue is required');
+        expect(() => redeemScriptParser.getErpRedeemScript(publicKeys, erpPublicKeys, '')).to.throw('csvValue is required');
     });
 
     it('should return a valid erp redeem script', () => {
-        let pubKeys = [
-            getRandomPubkey(),
-            getRandomPubkey(),
-            getRandomPubkey()
-        ];
-        let erpPubKeys = [
-            getRandomPubkey(),
-            getRandomPubkey(),
-        ];
-        let csvValue = 'cd50';
-        let erpRedeemScript = redeemScriptParser.getErpRedeemScript(pubKeys, erpPubKeys, csvValue).toString('hex');
-
-        validateErpRedeemScriptFormat(erpRedeemScript, pubKeys, erpPubKeys);
+        let erpRedeemScript = redeemScriptParser.getErpRedeemScript(publicKeys, erpPublicKeys, csvValue).toString('hex');
+        validateErpRedeemScriptFormat(erpRedeemScript, publicKeys, erpPublicKeys);
     });
 });
 
 describe('getFlyoverRedeemScript', () => {
-    it('should fail for invalid data', () => {
-        expect(() => redeemScriptParser.getFlyoverRedeemScript(null)).to.throw();
-        expect(() => redeemScriptParser.getFlyoverRedeemScript([getRandomPubkey()])).to.throw();
+    let dHash = crypto.randomBytes(32).toString('hex');
+    let publicKeys = [getRandomPubkey(), getRandomPubkey(), getRandomPubkey()];
+    
+    it('should fail for invalid data', () => {    
+        // fail because there is no derivation hash
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(null)).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(null, null)).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(publicKeys, null)).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(publicKeys, '')).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
         // a short hash
-        expect(() => redeemScriptParser.getFlyoverRedeemScript([getRandomPubkey()], [getRandomPubkey()], '9', crypto.randomBytes(1).toString('hex'))).to.throw;
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(publicKeys, dHash.substring(1))).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
         // a long hash
-        expect(() => redeemScriptParser.getFlyoverRedeemScript([getRandomPubkey()], [getRandomPubkey()], 'a', crypto.randomBytes(33).toString('hex'))).to.throw;
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(publicKeys, dHash.concat('1'))).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        
+        // fail because there are no public keys
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(null, dHash)).to.throw('powpegBtcPublicKeys should be an array');
+        expect(() => redeemScriptParser.getFlyoverRedeemScript('', dHash)).to.throw('powpegBtcPublicKeys should be an array');
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(getRandomPubkey(), dHash)).to.throw('powpegBtcPublicKeys should be an array');
     });
 
     it('should return a valid flyover redeem script', () => {
-        let pubKeys = [getRandomPubkey(), getRandomPubkey()];
-        let dHash = crypto.randomBytes(32).toString('hex');
-        let redeemScript = redeemScriptParser.getFlyoverRedeemScript(pubKeys, dHash).toString('hex');
-        checkPubKeysIncludedInRedeemScript(pubKeys, redeemScript);
+        let redeemScript = redeemScriptParser.getFlyoverRedeemScript(publicKeys, dHash).toString('hex');
+        checkPubKeysIncludedInRedeemScript(publicKeys, redeemScript);
         expect(redeemScript.indexOf(dHash)).to.be.above(0);
     });
 });
 
 describe('getFlyoverErpRedeemScript', () => {
+    let publicKeys = [
+        getRandomPubkey(),
+        getRandomPubkey(),
+        getRandomPubkey()
+    ];
+    let erpPublicKeys = [
+        getRandomPubkey(),
+        getRandomPubkey(),
+    ];
+    let csvValue = 'cd50';
+    let dHash = crypto.randomBytes(32).toString('hex');
+
     it('should fail for invalid data', () => {
         // fail because there is no derivation hash
-        expect(() => redeemScriptParser.getFlyoverErpRedeemScript()).to.throw();
-        // fail because there is no network
+        expect(() => redeemScriptParser.getFlyoverErpRedeemScript()).to.throw('derivationArgsHash must be hash represented as a 64 characters string');
+        // fail because there is no powpeg public keys
         expect(() => redeemScriptParser.getFlyoverErpRedeemScript(
-            undefined, 
-            undefined, 
-            crypto.randomBytes(32).toString('hex')
-        )).to.throw();
-        // fail because there is no public keys
+            null, 
+            erpPublicKeys, 
+            csvValue, 
+            dHash
+        )).to.throw('powpegBtcPublicKeys should be an array');
+        // fail because there is no erp public keys
         expect(() => redeemScriptParser.getFlyoverErpRedeemScript(
-            undefined, 
-            undefined, 
-            'a', 
-            crypto.randomBytes(32).toString('hex'))
-        ).to.throw();
+            publicKeys, 
+            null, 
+            csvValue, 
+            dHash
+        )).to.throw('erpBtcPublicKeys should be an array');
     });
 
     it('should return a valid flyover erp redeem script', () => {
-        let pubKeys = [
-            getRandomPubkey(),
-            getRandomPubkey(),
-            getRandomPubkey()
-        ];
-        let erpPubKeys = [
-            getRandomPubkey(),
-            getRandomPubkey(),
-        ];
-        let csvValue = 'cd50';
-        let dHash = crypto.randomBytes(32).toString('hex');
-        let redeemScript = redeemScriptParser.getFlyoverErpRedeemScript(pubKeys, erpPubKeys, csvValue, dHash).toString('hex');
-        checkPubKeysIncludedInRedeemScript(pubKeys, redeemScript);
-        checkPubKeysIncludedInRedeemScript(erpPubKeys, redeemScript);
+        let redeemScript = redeemScriptParser.getFlyoverErpRedeemScript(publicKeys, erpPublicKeys, csvValue, dHash).toString('hex');
+        checkPubKeysIncludedInRedeemScript(publicKeys, redeemScript);
+        checkPubKeysIncludedInRedeemScript(erpPublicKeys, redeemScript);
         expect(redeemScript.indexOf(csvValue)).to.be.above(0);
         expect(redeemScript.indexOf(dHash)).to.be.above(0);
     });
@@ -166,9 +188,9 @@ describe('getFlyoverErpRedeemScript', () => {
 
 describe('getAddressFromRedeemSript', () => {
     it('should fail for invalid data', () => {
-        expect(() => redeemScriptParser.getAddressFromRedeemSript()).to.throw();
-        expect(() => redeemScriptParser.getAddressFromRedeemSript(redeemScriptParser.NETWORKS.MAINNET)).to.throw();
-        expect(() => redeemScriptParser.getAddressFromRedeemSript(redeemScriptParser.NETWORKS.MAINNET, 'not-a-buffer')).to.throw();
+        expect(() => redeemScriptParser.getAddressFromRedeemSript()).to.throw('Network undefined');
+        expect(() => redeemScriptParser.getAddressFromRedeemSript(redeemScriptParser.NETWORKS.MAINNET)).to.throw('redeemScript must be a Buffer');
+        expect(() => redeemScriptParser.getAddressFromRedeemSript(redeemScriptParser.NETWORKS.MAINNET, 'not-a-buffer')).to.throw('redeemScript must be a Buffer');
     });
 
     it('should generate a valid addreses', () => {
