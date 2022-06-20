@@ -214,6 +214,13 @@ describe('getFlyoverErpRedeemScript', () => {
             csvValue, 
             dHash
         )).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
+        // fail because there is no csvValue
+        expect(() => redeemScriptParser.getFlyoverErpRedeemScript(
+            publicKeys,
+            erpPublicKeys,
+            null,
+            dHash
+          )).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
     });
 
     it('should return a valid flyover erp redeem script', () => {
