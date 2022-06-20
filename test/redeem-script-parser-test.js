@@ -227,9 +227,9 @@ describe('getFlyoverErpRedeemScript', () => {
 
 describe('getAddressFromRedeemSript', () => {
     it('should fail for invalid data', () => {
-        expect(() => redeemScriptParser.getAddressFromRedeemSript()).to.throw(ERROR_MESSAGES.INVALID_NETWORK);
-        expect(() => redeemScriptParser.getAddressFromRedeemSript(redeemScriptParser.NETWORKS.MAINNET)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
-        expect(() => redeemScriptParser.getAddressFromRedeemSript(redeemScriptParser.NETWORKS.MAINNET, 'not-a-buffer')).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.getAddressFromRedeemScript()).to.throw(ERROR_MESSAGES.INVALID_NETWORK);
+        expect(() => redeemScriptParser.getAddressFromRedeemScript(redeemScriptParser.NETWORKS.MAINNET)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.getAddressFromRedeemScript(redeemScriptParser.NETWORKS.MAINNET, 'not-a-buffer')).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
     });
 
     it('should generate a valid addreses', () => {
@@ -241,7 +241,7 @@ describe('getAddressFromRedeemSript', () => {
         ];
         const expectedPowpegAddress = '2N5muMepJizJE1gR7FbHJU6CD18V3BpNF9p';
         let redeemScript = redeemScriptParser.getPowpegRedeemScript(pubKeys);
-        expect(redeemScriptParser.getAddressFromRedeemSript(
+        expect(redeemScriptParser.getAddressFromRedeemScript(
             redeemScriptParser.NETWORKS.REGTEST, 
             redeemScript
         )).to.be.eq(expectedPowpegAddress);

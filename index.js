@@ -119,7 +119,7 @@ const getFlyoverRedeemScript = (powpegRedeemScript, derivationArgsHash) => {
     ]);
 }
 
-const getAddressFromRedeemSript = (network, redeemScript) => {
+const getAddressFromRedeemScript = (network, redeemScript) => {
     isValidNetwork(network);
 
     if (!redeemScript || !(redeemScript instanceof Buffer)) {
@@ -136,6 +136,6 @@ module.exports = {
     getFlyoverRedeemScriptFromPublicKeys,
     getFlyoverRedeemScript,
     getFlyoverErpRedeemScript,
-    getAddressFromRedeemSript,
+    getAddressFromRedeemScript,
     NETWORKS: NETWORKS
 };

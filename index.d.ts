@@ -47,4 +47,4 @@ export function getFlyoverRedeemScriptFromPublicKeys(powpegBtcPublicKeys: Array<
   * @param network network is used to select the proper ERP constants
   * @param redeemScript a calculated redeemscript
   */
- export function getAddressFromRedeemSript(network: NETWORKS, redeemScript: Buffer): string;
+ export function getAddressFromRedeemScript(network: NETWORKS, redeemScript: Buffer): string;
