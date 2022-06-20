@@ -83,16 +83,16 @@ describe('getPowpegRedeemScript', () => {
 });
 
 describe('getErpRedeemScript', () => {
-    let publicKeys = [
+    const publicKeys = [
         getRandomPubkey(),
         getRandomPubkey(),
         getRandomPubkey()
     ];
-    let erpPublicKeys = [
+    const erpPublicKeys = [
         getRandomPubkey(),
         getRandomPubkey(),
     ];
-    let csvValue = 'cd50';
+    const csvValue = 'cd50';
 
     it('fails for invalid data', () => {
         // fail because there are no powpeg public keys
@@ -118,8 +118,8 @@ describe('getErpRedeemScript', () => {
 });
 
 describe('getFlyoverRedeemScriptFromPublicKeys', () => {
-    let dHash = crypto.randomBytes(32).toString('hex');
-    let publicKeys = [getRandomPubkey(), getRandomPubkey(), getRandomPubkey()];
+    const dHash = crypto.randomBytes(32).toString('hex');
+    const publicKeys = [getRandomPubkey(), getRandomPubkey(), getRandomPubkey()];
     
     it('should fail for invalid data', () => {    
         // fail because there is no derivation hash
@@ -146,9 +146,9 @@ describe('getFlyoverRedeemScriptFromPublicKeys', () => {
 });
 
 describe('getFlyoverRedeemScript', () => {
-    let dHash = crypto.randomBytes(32).toString('hex');
-    let publicKeys = [getRandomPubkey(), getRandomPubkey()];
-    let redeemScript = redeemScriptParser.getPowpegRedeemScript(publicKeys);
+    const dHash = crypto.randomBytes(32).toString('hex');
+    const publicKeys = [getRandomPubkey(), getRandomPubkey()];
+    const redeemScript = redeemScriptParser.getPowpegRedeemScript(publicKeys);
 
     it('should fail for invalid data', () => {
         // fail because there is no redeem script
@@ -176,17 +176,17 @@ describe('getFlyoverRedeemScript', () => {
 
 
 describe('getFlyoverErpRedeemScript', () => {
-    let publicKeys = [
+    const publicKeys = [
         getRandomPubkey(),
         getRandomPubkey(),
         getRandomPubkey()
     ];
-    let erpPublicKeys = [
+    const erpPublicKeys = [
         getRandomPubkey(),
         getRandomPubkey(),
     ];
-    let csvValue = 'cd50';
-    let dHash = crypto.randomBytes(32).toString('hex');
+    const csvValue = 'cd50';
+    const dHash = crypto.randomBytes(32).toString('hex');
 
     it('should fail for invalid data', () => {
         // fail because there is no derivation hash
@@ -225,12 +225,12 @@ describe('getAddressFromRedeemSript', () => {
 
     it('should generate a valid addreses', () => {
         // This is the regtest genesis powpeg address
-        let pubKeys = [
+        const pubKeys = [
             '02cd53fc53a07f211641a677d250f6de99caf620e8e77071e811a28b3bcddf0be1',
             '0362634ab57dae9cb373a5d536e66a8c4f67468bbcfb063809bab643072d78a124',
             '03c5946b3fbae03a654237da863c9ed534e0878657175b132b8ca630f245df04db',
         ];
-        let expectedPowpegAddress = '2N5muMepJizJE1gR7FbHJU6CD18V3BpNF9p';
+        const expectedPowpegAddress = '2N5muMepJizJE1gR7FbHJU6CD18V3BpNF9p';
         let redeemScript = redeemScriptParser.getPowpegRedeemScript(pubKeys);
         expect(redeemScriptParser.getAddressFromRedeemSript(redeemScriptParser.NETWORKS.REGTEST, redeemScript)).to.be.eq(expectedPowpegAddress);
     });
