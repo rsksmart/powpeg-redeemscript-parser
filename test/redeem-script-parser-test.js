@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const opcodes = require('bitcoinjs-lib').script.OPS;
 const EcPair = require('bitcoinjs-lib').ECPair;
 const expect = require('chai').expect;
+const { NETWORKS, ERROR_MESSAGES } = require('../constants');
 
 const getRandomPubkey = () =>  EcPair.makeRandom().publicKey;
 const decimalToHexString = (number) => number.toString(16);
@@ -23,16 +24,6 @@ const decimalToOpCode = {
     14: opcodes.OP_14,
     15: opcodes.OP_15,
     16: opcodes.OP_16
-}
-
-const ERROR_MESSAGES = {
-    INVALID_POWPEG_PUBLIC_KEYS: 'powpegBtcPublicKeys should be an array',
-    INVALID_ERP_PUBLIC_KEYS: 'erpBtcPublicKeys should be an array',
-    INVALID_CSV_VALUE: 'csvValue is required',
-    INVALID_DHASH: 'derivationArgsHash must be hash represented as a 64 characters string',
-    INVALID_POWPEG_REDEEM_SCRIPT: 'powpegRedeemScript must be a Buffer',
-    INVALID_REDEEM_SCRIPT: 'redeemScript must be a Buffer',
-    INVALID_NETWORK: 'Network undefined'
 }
 
 const checkPubKeysIncludedInRedeemScript = (pubKeys, redeemScript) => {
@@ -235,8 +226,8 @@ describe('getFlyoverErpRedeemScript', () => {
 describe('getAddressFromRedeemSript', () => {
     it('should fail for invalid data', () => {
         expect(() => redeemScriptParser.getAddressFromRedeemScript()).to.throw(ERROR_MESSAGES.INVALID_NETWORK);
-        expect(() => redeemScriptParser.getAddressFromRedeemScript(redeemScriptParser.NETWORKS.MAINNET)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
-        expect(() => redeemScriptParser.getAddressFromRedeemScript(redeemScriptParser.NETWORKS.MAINNET, 'not-a-buffer')).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.getAddressFromRedeemScript(NETWORKS.MAINNET)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.getAddressFromRedeemScript(NETWORKS.MAINNET, 'not-a-buffer')).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
     });
 
     it('should generate a valid addreses', () => {
@@ -249,7 +240,7 @@ describe('getAddressFromRedeemSript', () => {
         const expectedPowpegAddress = '2N5muMepJizJE1gR7FbHJU6CD18V3BpNF9p';
         let redeemScript = redeemScriptParser.getPowpegRedeemScript(pubKeys);
         expect(redeemScriptParser.getAddressFromRedeemScript(
-            redeemScriptParser.NETWORKS.REGTEST, 
+            NETWORKS.REGTEST, 
             redeemScript
         )).to.be.eq(expectedPowpegAddress);
     });
