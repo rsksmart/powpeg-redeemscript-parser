@@ -1,10 +1,5 @@
 const bitcoin = require('bitcoinjs-lib');
-
-const NETWORKS = {
-    MAINNET: 'MAINNET',
-    TESTNET: 'TESTNET',
-    REGTEST: 'REGTEST'
-}
+const { NETWORKS, ERROR_MESSAGES } = require('./constants');
 
 const bitcoinjsNetworks = {};
 bitcoinjsNetworks[NETWORKS.MAINNET] = bitcoin.networks.bitcoin;
@@ -22,7 +17,7 @@ const isValidNetwork = (network) => {
 
 const getPowpegRedeemScript = (powpegBtcPublicKeys) => {
     if (!powpegBtcPublicKeys || !(powpegBtcPublicKeys instanceof Array)) {
-        throw new Error("powpegBtcPublicKeys should be an array");
+        throw new Error(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
     }
     // Parse to Buffer and sort keys
     let defaultPubkeys = powpegBtcPublicKeys
@@ -32,7 +27,16 @@ const getPowpegRedeemScript = (powpegBtcPublicKeys) => {
 };
 
 const getErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue) => {
-
+    if (!powpegBtcPublicKeys || !(powpegBtcPublicKeys instanceof Array)) {
+        throw new Error(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
+    }
+    if (!erpBtcPublicKeys || !(erpBtcPublicKeys instanceof Array)) {
+        throw new Error(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
+    }
+    if (!csvValue || csvValue.length === 0) {
+        throw new Error(ERROR_MESSAGES.INVALID_CSV_VALUE);
+    }
+    
     let erpPubKeys = erpBtcPublicKeys.map(hex => Buffer.from(hex, 'hex'));
     let erpRedeemScriptBuff = bitcoin.payments.p2ms({ m: parseInt(erpPubKeys.length / 2) + 1, pubkeys: erpPubKeys });
     
@@ -75,7 +79,7 @@ const getErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue) => 
 
 const getFlyoverPrefix = (derivationArgsHash) => {
     if (!derivationArgsHash || derivationArgsHash.length !== 64) {
-        throw new Error("derivationArgsHash must be hash represented as a 64 characters string");
+        throw new Error(ERROR_MESSAGES.INVALID_DHASH);
     }
     let prefix = Buffer.alloc(34);
     prefix.write('20', 'hex'); // hash length
@@ -92,18 +96,29 @@ const getFlyoverErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvVal
     ]);
 }
 
-const getFlyoverRedeemScript = (powpegBtcPublicKeys, derivationArgsHash) => {
+const getFlyoverRedeemScriptFromPublicKeys = (powpegBtcPublicKeys, derivationArgsHash) => {
     return Buffer.concat([
         getFlyoverPrefix(derivationArgsHash), 
         getPowpegRedeemScript(powpegBtcPublicKeys)
     ]);
 }
 
-const getAddressFromRedeemSript = (network, redeemScript) => {
+const getFlyoverRedeemScript = (powpegRedeemScript, derivationArgsHash) => {
+    if (!powpegRedeemScript || !(powpegRedeemScript instanceof Buffer)) {
+        throw new Error(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
+    }
+    
+    return Buffer.concat([
+        getFlyoverPrefix(derivationArgsHash), 
+        powpegRedeemScript
+    ]);
+}
+
+const getAddressFromRedeemScript = (network, redeemScript) => {
     isValidNetwork(network);
 
     if (!redeemScript || !(redeemScript instanceof Buffer)) {
-        throw new Error("redeemScript must be a Buffer");
+        throw new Error(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
     }
 
     let doubleHash = bitcoin.crypto.ripemd160(bitcoin.crypto.sha256(redeemScript));
@@ -113,8 +128,9 @@ const getAddressFromRedeemSript = (network, redeemScript) => {
 module.exports = {
     getPowpegRedeemScript,
     getErpRedeemScript,
+    getFlyoverRedeemScriptFromPublicKeys,
     getFlyoverRedeemScript,
     getFlyoverErpRedeemScript,
-    getAddressFromRedeemSript,
+    getAddressFromRedeemScript,
     NETWORKS: NETWORKS
 };

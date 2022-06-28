@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const opcodes = require('bitcoinjs-lib').script.OPS;
 const EcPair = require('bitcoinjs-lib').ECPair;
 const expect = require('chai').expect;
+const { NETWORKS, ERROR_MESSAGES } = require('../constants');
 
 const getRandomPubkey = () =>  EcPair.makeRandom().publicKey;
 const decimalToHexString = (number) => number.toString(16);
@@ -62,8 +63,8 @@ const validateErpRedeemScriptFormat = (erpRedeemScript, pubKeys, erpPubKeys) => 
 
 describe('getPowpegRedeemScript', () => {
     it ('should fail for invalid data', () => {
-        expect(() => redeemScriptParser.getPowpegRedeemScript(null)).to.throw();
-        expect(() => redeemScriptParser.getPowpegRedeemScript('a-string')).to.throw();
+        expect(() => redeemScriptParser.getPowpegRedeemScript(null)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
+        expect(() => redeemScriptParser.getPowpegRedeemScript('a-string')).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
     });
 
     it('should return a valid redeem script', () => {
@@ -83,82 +84,140 @@ describe('getPowpegRedeemScript', () => {
 });
 
 describe('getErpRedeemScript', () => {
+    const publicKeys = [
+        getRandomPubkey(),
+        getRandomPubkey(),
+        getRandomPubkey()
+    ];
+    const erpPublicKeys = [
+        getRandomPubkey(),
+        getRandomPubkey(),
+    ];
+    const csvValue = 'cd50';
+
     it('fails for invalid data', () => {
-        expect(() => redeemScriptParser.getErpRedeemScript()).to.throw();
-        expect(() => redeemScriptParser.getErpRedeemScript('nothing')).to.throw();
-        expect(() => redeemScriptParser.getErpRedeemScript([getRandomPubkey()], null, null)).to.throw();
+        // fail because there are no powpeg public keys
+        expect(() => redeemScriptParser.getErpRedeemScript()).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
+        expect(() => redeemScriptParser.getErpRedeemScript(null)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
+        expect(() => redeemScriptParser.getErpRedeemScript('nothing')).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
+        expect(() => redeemScriptParser.getErpRedeemScript(null, null, null)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
+
+        // fail because there are no erp public keys
+        expect(() => redeemScriptParser.getErpRedeemScript(publicKeys, null, null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
+        expect(() => redeemScriptParser.getErpRedeemScript(publicKeys, '', null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
+        expect(() => redeemScriptParser.getErpRedeemScript(publicKeys, getRandomPubkey(), null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
+
+        // fail because there is no csv value
+        expect(() => redeemScriptParser.getErpRedeemScript(publicKeys, erpPublicKeys, null)).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
+        expect(() => redeemScriptParser.getErpRedeemScript(publicKeys, erpPublicKeys, '')).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
     });
 
     it('should return a valid erp redeem script', () => {
-        let pubKeys = [
-            getRandomPubkey(),
-            getRandomPubkey(),
-            getRandomPubkey()
-        ];
-        let erpPubKeys = [
-            getRandomPubkey(),
-            getRandomPubkey(),
-        ];
-        let csvValue = 'cd50';
-        let erpRedeemScript = redeemScriptParser.getErpRedeemScript(pubKeys, erpPubKeys, csvValue).toString('hex');
-
-        validateErpRedeemScriptFormat(erpRedeemScript, pubKeys, erpPubKeys);
+        let erpRedeemScript = redeemScriptParser.getErpRedeemScript(publicKeys, erpPublicKeys, csvValue).toString('hex');
+        validateErpRedeemScriptFormat(erpRedeemScript, publicKeys, erpPublicKeys);
     });
 });
 
-describe('getFlyoverRedeemScript', () => {
-    it('should fail for invalid data', () => {
-        expect(() => redeemScriptParser.getFlyoverRedeemScript(null)).to.throw();
-        expect(() => redeemScriptParser.getFlyoverRedeemScript([getRandomPubkey()])).to.throw();
+describe('getFlyoverRedeemScriptFromPublicKeys', () => {
+    const dHash = crypto.randomBytes(32).toString('hex');
+    const publicKeys = [getRandomPubkey(), getRandomPubkey(), getRandomPubkey()];
+    
+    it('should fail for invalid data', () => {    
+        // fail because there is no derivation hash
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(null)).to.throw(ERROR_MESSAGES.INVALID_DHASH);
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(null, null)).to.throw(ERROR_MESSAGES.INVALID_DHASH);
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, null)).to.throw(ERROR_MESSAGES.INVALID_DHASH);
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, '')).to.throw(ERROR_MESSAGES.INVALID_DHASH);
         // a short hash
-        expect(() => redeemScriptParser.getFlyoverRedeemScript([getRandomPubkey()], [getRandomPubkey()], '9', crypto.randomBytes(1).toString('hex'))).to.throw;
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, dHash.substring(1))).to.throw(ERROR_MESSAGES.INVALID_DHASH);
         // a long hash
-        expect(() => redeemScriptParser.getFlyoverRedeemScript([getRandomPubkey()], [getRandomPubkey()], 'a', crypto.randomBytes(33).toString('hex'))).to.throw;
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, dHash.concat('1'))).to.throw(ERROR_MESSAGES.INVALID_DHASH);
+        
+        // fail because there are no public keys
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(null, dHash)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys('', dHash)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
+        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(getRandomPubkey(), dHash)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
     });
 
     it('should return a valid flyover redeem script', () => {
-        let pubKeys = [getRandomPubkey(), getRandomPubkey()];
-        let dHash = crypto.randomBytes(32).toString('hex');
-        let redeemScript = redeemScriptParser.getFlyoverRedeemScript(pubKeys, dHash).toString('hex');
-        checkPubKeysIncludedInRedeemScript(pubKeys, redeemScript);
+        let redeemScript = redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, dHash).toString('hex');
+        checkPubKeysIncludedInRedeemScript(publicKeys, redeemScript);
         expect(redeemScript.indexOf(dHash)).to.be.above(0);
     });
 });
 
+describe('getFlyoverRedeemScript', () => {
+    const dHash = crypto.randomBytes(32).toString('hex');
+    const publicKeys = [getRandomPubkey(), getRandomPubkey()];
+    const redeemScript = redeemScriptParser.getPowpegRedeemScript(publicKeys);
+
+    it('should fail for invalid data', () => {
+        // fail because there is no redeem script
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(null)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(null, null)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(null, dHash)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.getFlyoverRedeemScript('', dHash)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.getFlyoverRedeemScript('not-a-buffer', dHash)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
+        
+        // fail because there is no derivation hash
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(redeemScript, null)).to.throw(ERROR_MESSAGES.INVALID_DHASH);
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(redeemScript, '')).to.throw(ERROR_MESSAGES.INVALID_DHASH);
+        // a short hash
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(redeemScript, dHash.substring(1))).to.throw(ERROR_MESSAGES.INVALID_DHASH);
+        // a long hash
+        expect(() => redeemScriptParser.getFlyoverRedeemScript(redeemScript, dHash.concat('1'))).to.throw(ERROR_MESSAGES.INVALID_DHASH);
+    });
+
+    it('should return a valid flyover redeem script', () => {
+        let flyoverRedeemScript = redeemScriptParser.getFlyoverRedeemScript(redeemScript, dHash).toString('hex');
+        checkPubKeysIncludedInRedeemScript(publicKeys, flyoverRedeemScript);
+        expect(flyoverRedeemScript.indexOf(dHash)).to.be.above(0);
+    });
+});
+
 describe('getFlyoverErpRedeemScript', () => {
+    const publicKeys = [
+        getRandomPubkey(),
+        getRandomPubkey(),
+        getRandomPubkey()
+    ];
+    const erpPublicKeys = [
+        getRandomPubkey(),
+        getRandomPubkey(),
+    ];
+    const csvValue = 'cd50';
+    const dHash = crypto.randomBytes(32).toString('hex');
+
     it('should fail for invalid data', () => {
         // fail because there is no derivation hash
-        expect(() => redeemScriptParser.getFlyoverErpRedeemScript()).to.throw();
-        // fail because there is no network
+        expect(() => redeemScriptParser.getFlyoverErpRedeemScript()).to.throw(ERROR_MESSAGES.INVALID_DHASH);
+        // fail because there is no powpeg public keys
         expect(() => redeemScriptParser.getFlyoverErpRedeemScript(
-            undefined, 
-            undefined, 
-            crypto.randomBytes(32).toString('hex')
-        )).to.throw();
-        // fail because there is no public keys
+            null, 
+            erpPublicKeys, 
+            csvValue, 
+            dHash
+        )).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
+        // fail because there is no erp public keys
         expect(() => redeemScriptParser.getFlyoverErpRedeemScript(
-            undefined, 
-            undefined, 
-            'a', 
-            crypto.randomBytes(32).toString('hex'))
-        ).to.throw();
+            publicKeys, 
+            null, 
+            csvValue, 
+            dHash
+        )).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
+        // fail because there is no csvValue
+        expect(() => redeemScriptParser.getFlyoverErpRedeemScript(
+            publicKeys,
+            erpPublicKeys,
+            null,
+            dHash
+          )).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
     });
 
     it('should return a valid flyover erp redeem script', () => {
-        let pubKeys = [
-            getRandomPubkey(),
-            getRandomPubkey(),
-            getRandomPubkey()
-        ];
-        let erpPubKeys = [
-            getRandomPubkey(),
-            getRandomPubkey(),
-        ];
-        let csvValue = 'cd50';
-        let dHash = crypto.randomBytes(32).toString('hex');
-        let redeemScript = redeemScriptParser.getFlyoverErpRedeemScript(pubKeys, erpPubKeys, csvValue, dHash).toString('hex');
-        checkPubKeysIncludedInRedeemScript(pubKeys, redeemScript);
-        checkPubKeysIncludedInRedeemScript(erpPubKeys, redeemScript);
+        let redeemScript = redeemScriptParser.getFlyoverErpRedeemScript(publicKeys, erpPublicKeys, csvValue, dHash).toString('hex');
+        checkPubKeysIncludedInRedeemScript(publicKeys, redeemScript);
+        checkPubKeysIncludedInRedeemScript(erpPublicKeys, redeemScript);
         expect(redeemScript.indexOf(csvValue)).to.be.above(0);
         expect(redeemScript.indexOf(dHash)).to.be.above(0);
     });
@@ -166,20 +225,23 @@ describe('getFlyoverErpRedeemScript', () => {
 
 describe('getAddressFromRedeemSript', () => {
     it('should fail for invalid data', () => {
-        expect(() => redeemScriptParser.getAddressFromRedeemSript()).to.throw();
-        expect(() => redeemScriptParser.getAddressFromRedeemSript(redeemScriptParser.NETWORKS.MAINNET)).to.throw();
-        expect(() => redeemScriptParser.getAddressFromRedeemSript(redeemScriptParser.NETWORKS.MAINNET, 'not-a-buffer')).to.throw();
+        expect(() => redeemScriptParser.getAddressFromRedeemScript()).to.throw(ERROR_MESSAGES.INVALID_NETWORK);
+        expect(() => redeemScriptParser.getAddressFromRedeemScript(NETWORKS.MAINNET)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.getAddressFromRedeemScript(NETWORKS.MAINNET, 'not-a-buffer')).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
     });
 
     it('should generate a valid addreses', () => {
         // This is the regtest genesis powpeg address
-        let pubKeys = [
+        const pubKeys = [
             '02cd53fc53a07f211641a677d250f6de99caf620e8e77071e811a28b3bcddf0be1',
             '0362634ab57dae9cb373a5d536e66a8c4f67468bbcfb063809bab643072d78a124',
             '03c5946b3fbae03a654237da863c9ed534e0878657175b132b8ca630f245df04db',
         ];
-        let expectedPowpegAddress = '2N5muMepJizJE1gR7FbHJU6CD18V3BpNF9p';
+        const expectedPowpegAddress = '2N5muMepJizJE1gR7FbHJU6CD18V3BpNF9p';
         let redeemScript = redeemScriptParser.getPowpegRedeemScript(pubKeys);
-        expect(redeemScriptParser.getAddressFromRedeemSript(redeemScriptParser.NETWORKS.REGTEST, redeemScript)).to.be.eq(expectedPowpegAddress);
+        expect(redeemScriptParser.getAddressFromRedeemScript(
+            NETWORKS.REGTEST, 
+            redeemScript
+        )).to.be.eq(expectedPowpegAddress);
     });
 });
