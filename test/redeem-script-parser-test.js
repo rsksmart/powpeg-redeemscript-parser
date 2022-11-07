@@ -118,34 +118,6 @@ describe('getErpRedeemScript', () => {
     });
 });
 
-describe('getFlyoverRedeemScriptFromPublicKeys', () => {
-    const dHash = crypto.randomBytes(32).toString('hex');
-    const publicKeys = [getRandomPubkey(), getRandomPubkey(), getRandomPubkey()];
-    
-    it('should fail for invalid data', () => {    
-        // fail because there is no derivation hash
-        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(null)).to.throw(ERROR_MESSAGES.INVALID_DHASH);
-        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(null, null)).to.throw(ERROR_MESSAGES.INVALID_DHASH);
-        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, null)).to.throw(ERROR_MESSAGES.INVALID_DHASH);
-        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, '')).to.throw(ERROR_MESSAGES.INVALID_DHASH);
-        // a short hash
-        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, dHash.substring(1))).to.throw(ERROR_MESSAGES.INVALID_DHASH);
-        // a long hash
-        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, dHash.concat('1'))).to.throw(ERROR_MESSAGES.INVALID_DHASH);
-        
-        // fail because there are no public keys
-        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(null, dHash)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
-        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys('', dHash)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
-        expect(() => redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(getRandomPubkey(), dHash)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
-    });
-
-    it('should return a valid flyover redeem script', () => {
-        let redeemScript = redeemScriptParser.getFlyoverRedeemScriptFromPublicKeys(publicKeys, dHash).toString('hex');
-        checkPubKeysIncludedInRedeemScript(publicKeys, redeemScript);
-        expect(redeemScript.indexOf(dHash)).to.be.above(0);
-    });
-});
-
 describe('getFlyoverRedeemScript', () => {
     const dHash = crypto.randomBytes(32).toString('hex');
     const publicKeys = [getRandomPubkey(), getRandomPubkey()];
@@ -172,54 +144,6 @@ describe('getFlyoverRedeemScript', () => {
         let flyoverRedeemScript = redeemScriptParser.getFlyoverRedeemScript(redeemScript, dHash).toString('hex');
         checkPubKeysIncludedInRedeemScript(publicKeys, flyoverRedeemScript);
         expect(flyoverRedeemScript.indexOf(dHash)).to.be.above(0);
-    });
-});
-
-describe('getFlyoverErpRedeemScript', () => {
-    const publicKeys = [
-        getRandomPubkey(),
-        getRandomPubkey(),
-        getRandomPubkey()
-    ];
-    const erpPublicKeys = [
-        getRandomPubkey(),
-        getRandomPubkey(),
-    ];
-    const csvValue = 'cd50';
-    const dHash = crypto.randomBytes(32).toString('hex');
-
-    it('should fail for invalid data', () => {
-        // fail because there is no derivation hash
-        expect(() => redeemScriptParser.getFlyoverErpRedeemScript()).to.throw(ERROR_MESSAGES.INVALID_DHASH);
-        // fail because there is no powpeg public keys
-        expect(() => redeemScriptParser.getFlyoverErpRedeemScript(
-            null, 
-            erpPublicKeys, 
-            csvValue, 
-            dHash
-        )).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
-        // fail because there is no erp public keys
-        expect(() => redeemScriptParser.getFlyoverErpRedeemScript(
-            publicKeys, 
-            null, 
-            csvValue, 
-            dHash
-        )).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
-        // fail because there is no csvValue
-        expect(() => redeemScriptParser.getFlyoverErpRedeemScript(
-            publicKeys,
-            erpPublicKeys,
-            null,
-            dHash
-          )).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
-    });
-
-    it('should return a valid flyover erp redeem script', () => {
-        let redeemScript = redeemScriptParser.getFlyoverErpRedeemScript(publicKeys, erpPublicKeys, csvValue, dHash).toString('hex');
-        checkPubKeysIncludedInRedeemScript(publicKeys, redeemScript);
-        checkPubKeysIncludedInRedeemScript(erpPublicKeys, redeemScript);
-        expect(redeemScript.indexOf(csvValue)).to.be.above(0);
-        expect(redeemScript.indexOf(dHash)).to.be.above(0);
     });
 });
 

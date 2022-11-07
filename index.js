@@ -89,20 +89,6 @@ const getFlyoverPrefix = (derivationArgsHash) => {
     return prefix;
 };
 
-const getFlyoverErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue, derivationArgsHash) => {
-    return Buffer.concat([
-        getFlyoverPrefix(derivationArgsHash), 
-        getErpRedeemScript(powpegBtcPublicKeys, erpBtcPublicKeys, csvValue)
-    ]);
-}
-
-const getFlyoverRedeemScriptFromPublicKeys = (powpegBtcPublicKeys, derivationArgsHash) => {
-    return Buffer.concat([
-        getFlyoverPrefix(derivationArgsHash), 
-        getPowpegRedeemScript(powpegBtcPublicKeys)
-    ]);
-}
-
 const getFlyoverRedeemScript = (powpegRedeemScript, derivationArgsHash) => {
     if (!powpegRedeemScript || !(powpegRedeemScript instanceof Buffer)) {
         throw new Error(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
@@ -128,9 +114,7 @@ const getAddressFromRedeemScript = (network, redeemScript) => {
 module.exports = {
     getPowpegRedeemScript,
     getErpRedeemScript,
-    getFlyoverRedeemScriptFromPublicKeys,
     getFlyoverRedeemScript,
-    getFlyoverErpRedeemScript,
     getAddressFromRedeemScript,
     NETWORKS: NETWORKS
 };
