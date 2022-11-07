@@ -27,14 +27,14 @@ function getPowpegRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>): Buffe
 Generates a regular powpeg redeemscript.
 This methods takes the parameterized powpegBtcPublicKeys, sorts them ascending and generates a p2ms script. The signature threshold is half public keys plus one.
 
-### getErpRedeemScript
+### getP2shErpRedeemScript
 
 ```
-function getErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, erpBtcPublicKeys: Array<string|Buffer>, csvValue: string): Buffer;
+function getP2shErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, erpBtcPublicKeys: Array<string|Buffer>, csvValue: string): Buffer;
 ```
 
-Generates an ERP powpeg redeemscript. (this will become the default after the first powpeg change after IRIS)
-This method takes the parameterized powpegBtcPublicKeys, the emergency multisig public keys, and the delay value to generate the ERP redeeemscript.
+Generates a P2SH ERP powpeg redeemscript. (this will become the default after the first powpeg change after IRIS)
+This method takes the parameterized powpegBtcPublicKeys, the emergency multisig public keys, and the delay value to generate the P2SH ERP redeeemscript.
 
 ### getFlyoverRedeemScript
 
@@ -45,19 +45,10 @@ function getFlyoverRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, deriv
 Generates a Flyover redeemscript.
 This method expects a derivation arguments hash that represents the flyover protocol operation. With this it generates a prefix that is then joined with the regular powpeg redeemscript.
 
-### getErpFlyoverRedeemScript
+### getAddressFromRedeemScript
 
 ```
-function getErpFlyoverRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, erpBtcPublicKeys: Array<string|Buffer>, csvValue: string, derivationArgsHash: string): Buffer;
-```
-
-Generates an ERP Flyover redeemscript. (this will be the default for Flyover protocol operations after the first Powpeg change after IRIS)
-This method is a combination of ERP and Flyover logics.
-
-### getAddressFromRedeemSript
-
-```
-function getAddressFromRedeemSript(network: NETWORKS, redeemScript: Buffer): string;
+function getAddressFromRedeemScript(network: NETWORKS, redeemScript: Buffer): string;
 ```
 
 Generates a base58 address for the P2SH calculated from the provided redeemscript. The network is used to set the network prefix of the address.
