@@ -26,55 +26,52 @@ const getPowpegRedeemScript = (powpegBtcPublicKeys) => {
     return bitcoin.payments.p2ms({ m: parseInt(defaultPubkeys.length / 2) + 1, pubkeys: defaultPubkeys }).output;
 };
 
-const getErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue) => {
+const getP2shErpRedeemScript = (powpegBtcPublicKeys, p2shErpBtcPublicKeys, csvValue) => {
     if (!powpegBtcPublicKeys || !(powpegBtcPublicKeys instanceof Array)) {
         throw new Error(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
     }
-    if (!erpBtcPublicKeys || !(erpBtcPublicKeys instanceof Array)) {
+    if (!p2shErpBtcPublicKeys || !(p2shErpBtcPublicKeys instanceof Array)) {
         throw new Error(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
     }
     if (!csvValue || csvValue.length === 0) {
         throw new Error(ERROR_MESSAGES.INVALID_CSV_VALUE);
     }
     
-    let erpPubKeys = erpBtcPublicKeys.map(hex => Buffer.from(hex, 'hex'));
-    let erpRedeemScriptBuff = bitcoin.payments.p2ms({ m: parseInt(erpPubKeys.length / 2) + 1, pubkeys: erpPubKeys });
+    const p2shErpPubKeys = p2shErpBtcPublicKeys.map(hex => Buffer.from(hex, 'hex'));
+    const p2shErpRedeemScriptBuff = bitcoin.payments.p2ms({ m: parseInt(p2shErpPubKeys.length / 2) + 1, pubkeys: p2shErpPubKeys });
     
-    // Remove OP_CHECKMULTISIG from redeem scripts
-    let defaultRedeemScriptWithoutCheckMultisig = getPowpegRedeemScript(powpegBtcPublicKeys).toString('hex').slice(0, -2);
-    let erpRedeemScriptWithoutCheckMultisig = erpRedeemScriptBuff.output.toString('hex').slice(0, -2);
+    let defaultRedeemScript = getPowpegRedeemScript(powpegBtcPublicKeys).toString('hex');
+    let p2shErpRedeemScript = p2shErpRedeemScriptBuff.output.toString('hex');
 
     let bufferLength = parseInt(
         1 + 
-        defaultRedeemScriptWithoutCheckMultisig.length / 2 + 
+        defaultRedeemScript.length / 2 + 
         2 + 
         csvValue.length / 2 + 
         2 + 
-        erpRedeemScriptWithoutCheckMultisig.length / 2 + 
-        2
+        p2shErpRedeemScript.length / 2 + 
+        1
     );
 
-    let erpRedeemScript = Buffer.alloc(bufferLength);
-    erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_NOTIF), 'hex');
-    erpRedeemScript.write(defaultRedeemScriptWithoutCheckMultisig, 1, 'hex');
-    let position = 1 + parseInt(defaultRedeemScriptWithoutCheckMultisig.length / 2);
-    erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ELSE), position, 'hex');
+    let redeemScript = Buffer.alloc(bufferLength);
+    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_NOTIF), 'hex');
+    redeemScript.write(defaultRedeemScript, 1, 'hex');
+    let position = 1 + parseInt(defaultRedeemScript.length / 2);
+    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ELSE), position, 'hex');
     position+= 1;
-    erpRedeemScript.write('02', position, 'hex');
+    redeemScript.write('02', position, 'hex');
     position+= 1;
-    erpRedeemScript.write(csvValue, position, 'hex');
+    redeemScript.write(csvValue, position, 'hex');
     position+= csvValue.length / 2;
-    erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_CHECKSEQUENCEVERIFY), position, 'hex');
+    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_CHECKSEQUENCEVERIFY), position, 'hex');
     position+= 1;
-    erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_DROP), position, 'hex');
+    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_DROP), position, 'hex');
     position+= 1;
-    erpRedeemScript.write(erpRedeemScriptWithoutCheckMultisig, position, 'hex');
-    position+= erpRedeemScriptWithoutCheckMultisig.length / 2;
-    erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ENDIF), position, 'hex');
-    position+= 1;
-    erpRedeemScript.write(numberToHexString(bitcoin.script.OPS.OP_CHECKMULTISIG), position, 'hex');
+    redeemScript.write(p2shErpRedeemScript, position, 'hex');
+    position+= p2shErpRedeemScript.length / 2;
+    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ENDIF), position, 'hex');
 
-    return Buffer.from(erpRedeemScript, 'hex');
+    return Buffer.from(redeemScript, 'hex');
 }
 
 const getFlyoverPrefix = (derivationArgsHash) => {
@@ -113,7 +110,7 @@ const getAddressFromRedeemScript = (network, redeemScript) => {
 
 module.exports = {
     getPowpegRedeemScript,
-    getErpRedeemScript,
+    getP2shErpRedeemScript,
     getFlyoverRedeemScript,
     getAddressFromRedeemScript,
     NETWORKS: NETWORKS
