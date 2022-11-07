@@ -31,20 +31,16 @@ const csvValue = 'cd50';
 
     let powpegRedeemScript = redeemScriptParser.getPowpegRedeemScript(powpegPublicKeys);
     console.log('powpeg redeem script', powpegRedeemScript.toString('hex'));
-    console.log('powpeg address', redeemScriptParser.getAddressFromRedeemSript(network, powpegRedeemScript));
+    console.log('powpeg address', redeemScriptParser.getAddressFromRedeemScript(network, powpegRedeemScript));
 
-    let powpegErpRedeemScript = redeemScriptParser.getErpRedeemScript(powpegPublicKeys, erpPubKeys, csvValue);
+    let powpegErpRedeemScript = redeemScriptParser.getP2shErpRedeemScript(powpegPublicKeys, erpPubKeys, csvValue);
     console.log('powpeg ERP redeem script', powpegErpRedeemScript.toString('hex'));
-    console.log('powpeg ERP address', redeemScriptParser.getAddressFromRedeemSript(network, powpegErpRedeemScript));
+    console.log('powpeg ERP address', redeemScriptParser.getAddressFromRedeemScript(network, powpegErpRedeemScript));
 
     let randomFlyoverHash = crypto.randomBytes(32).toString('hex');
     console.log('random Flyover derivation hash', randomFlyoverHash);
 
-    let flyoverPowpegRedeemScript = redeemScriptParser.getFlyoverRedeemScript(powpegPublicKeys, randomFlyoverHash);
+    let flyoverPowpegRedeemScript = redeemScriptParser.getFlyoverRedeemScript(powpegRedeemScript, randomFlyoverHash);
     console.log('flyover powpeg redeem script', flyoverPowpegRedeemScript.toString('hex'));
-    console.log('flyover powpeg address', redeemScriptParser.getAddressFromRedeemSript(network, flyoverPowpegRedeemScript));
-
-    let flyoverErpPowpegRedeemScript = redeemScriptParser.getFlyoverErpRedeemScript(powpegPublicKeys, erpPubKeys, csvValue, randomFlyoverHash);
-    console.log('flyover erp powpeg redeem script', flyoverErpPowpegRedeemScript.toString('hex'));
-    console.log('flyover erp powpeg address', redeemScriptParser.getAddressFromRedeemSript(network, flyoverErpPowpegRedeemScript));
+    console.log('flyover powpeg address', redeemScriptParser.getAddressFromRedeemScript(network, flyoverPowpegRedeemScript));
 })();
