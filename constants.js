@@ -6,7 +6,7 @@ const NETWORKS = {
 
 const ERROR_MESSAGES = {
     INVALID_POWPEG_PUBLIC_KEYS: 'powpegBtcPublicKeys should be an array',
-    INVALID_ERP_PUBLIC_KEYS: 'erpBtcPublicKeys should be an array',
+    INVALID_P2SH_ERP_PUBLIC_KEYS: 'p2shErpBtcPublicKeys should be an array',
     INVALID_CSV_VALUE: 'csvValue is required',
     INVALID_DHASH: 'derivationArgsHash must be hash represented as a 64 characters string',
     INVALID_POWPEG_REDEEM_SCRIPT: 'powpegRedeemScript must be a Buffer',

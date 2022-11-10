@@ -19,8 +19,12 @@ const getPowpegRedeemScript = (powpegBtcPublicKeys) => {
     if (!powpegBtcPublicKeys || !(powpegBtcPublicKeys instanceof Array)) {
         throw new Error(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
     }
+    return getRedeemScriptFromBtcPublicKeys(powpegBtcPublicKeys);
+};
+
+const getRedeemScriptFromBtcPublicKeys = (btcPublicKeys) => {
     // Parse to Buffer and sort keys
-    let defaultPubkeys = powpegBtcPublicKeys
+    const defaultPubkeys = btcPublicKeys
         .map(hex => hex instanceof Buffer ? hex: Buffer.from(hex, 'hex'))
         .sort((a, b) => a.compare(b));
     return bitcoin.payments.p2ms({ m: parseInt(defaultPubkeys.length / 2) + 1, pubkeys: defaultPubkeys }).output;
@@ -31,19 +35,16 @@ const getP2shErpRedeemScript = (powpegBtcPublicKeys, p2shErpBtcPublicKeys, csvVa
         throw new Error(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
     }
     if (!p2shErpBtcPublicKeys || !(p2shErpBtcPublicKeys instanceof Array)) {
-        throw new Error(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
+        throw new Error(ERROR_MESSAGES.INVALID_P2SH_ERP_PUBLIC_KEYS);
     }
     if (!csvValue || csvValue.length === 0) {
         throw new Error(ERROR_MESSAGES.INVALID_CSV_VALUE);
     }
-    
-    const p2shErpPubKeys = p2shErpBtcPublicKeys.map(hex => Buffer.from(hex, 'hex'));
-    const p2shErpRedeemScriptBuff = bitcoin.payments.p2ms({ m: parseInt(p2shErpPubKeys.length / 2) + 1, pubkeys: p2shErpPubKeys });
-    
-    let defaultRedeemScript = getPowpegRedeemScript(powpegBtcPublicKeys).toString('hex');
-    let p2shErpRedeemScript = p2shErpRedeemScriptBuff.output.toString('hex');
 
-    let bufferLength = parseInt(
+    const defaultRedeemScript = getPowpegRedeemScript(powpegBtcPublicKeys).toString('hex');
+    const p2shErpRedeemScript = getRedeemScriptFromBtcPublicKeys(p2shErpBtcPublicKeys).toString('hex');
+
+    const bufferLength = parseInt(
         1 + 
         defaultRedeemScript.length / 2 + 
         2 + 
@@ -53,13 +54,14 @@ const getP2shErpRedeemScript = (powpegBtcPublicKeys, p2shErpBtcPublicKeys, csvVa
         1
     );
 
-    let redeemScript = Buffer.alloc(bufferLength);
+    const redeemScript = Buffer.alloc(bufferLength);
+
     redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_NOTIF), 'hex');
     redeemScript.write(defaultRedeemScript, 1, 'hex');
     let position = 1 + parseInt(defaultRedeemScript.length / 2);
     redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ELSE), position, 'hex');
     position+= 1;
-    redeemScript.write('02', position, 'hex');
+    redeemScript.write(`0${csvValue.length / 2}`, position, 'hex'); // OP_PUSHBYTES
     position+= 1;
     redeemScript.write(csvValue, position, 'hex');
     position+= csvValue.length / 2;
