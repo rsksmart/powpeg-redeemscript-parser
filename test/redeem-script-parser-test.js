@@ -93,8 +93,8 @@ describe('getP2shErpRedeemScript', () => {
         getRandomPubkey(),
         getRandomPubkey(),
     ];
-    const csvValue = 'cd50';
-
+    const csvValue = 52560;
+    
     it('fails for invalid data', () => {
         // fail because there are no powpeg public keys
         expect(() => redeemScriptParser.getP2shErpRedeemScript()).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);

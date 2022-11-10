@@ -1,6 +1,6 @@
 const bitcoin = require('bitcoinjs-lib');
 const { NETWORKS, ERROR_MESSAGES } = require('./constants');
-
+const { numberToHexStringLE } = require('./utils');
 const bitcoinjsNetworks = {};
 bitcoinjsNetworks[NETWORKS.MAINNET] = bitcoin.networks.bitcoin;
 bitcoinjsNetworks[NETWORKS.TESTNET] = bitcoin.networks.testnet;
@@ -37,8 +37,10 @@ const getP2shErpRedeemScript = (powpegBtcPublicKeys, p2shErpBtcPublicKeys, csvVa
     if (!p2shErpBtcPublicKeys || !(p2shErpBtcPublicKeys instanceof Array)) {
         throw new Error(ERROR_MESSAGES.INVALID_P2SH_ERP_PUBLIC_KEYS);
     }
-    if (!csvValue || csvValue.length === 0) {
+    if (!csvValue || isNaN(csvValue)) {
         throw new Error(ERROR_MESSAGES.INVALID_CSV_VALUE);
+    } else {
+        csvValue = numberToHexStringLE(csvValue);
     }
 
     const defaultRedeemScript = getPowpegRedeemScript(powpegBtcPublicKeys).toString('hex');
