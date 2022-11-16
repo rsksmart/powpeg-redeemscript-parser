@@ -1,41 +1,25 @@
-const reverseString = (str) => {
-    return str.split("").reverse().join("");
-}
-
-const swapCharacters = (str) => {
-    const strArray = str.split("");
-    for (let i = 0; i < strArray.length - 1; i += 2) {
-        let temp = strArray[i]; 
-        strArray[i] = strArray[i + 1]; 
-        strArray[i + 1] = temp; 
-    }
-    return strArray.join("");
-}
-
 const numberToHexStringLE = (number) => {
-    const numberAsBitArray = number.toString(2).split("");
-    const bitLength = numberAsBitArray.length;
-    let numberAsBitString = "";
-    if (bitLength < 8) {
-        numberAsBitString = numberAsBitArray.join("").padStart(8, '0');
-    } else if (bitLength > 8) {
-        numberAsBitString = numberAsBitArray.join("").padStart(16, '0');
-    } else {
-        numberAsBitString = numberAsBitArray.join("");
-    }
 
     let numberAsHex = number.toString(16);
-    if (Number(numberAsBitString.substring(0, 2))) {
-        numberAsHex = reverseString(swapCharacters(numberAsHex));
-        numberAsHex = numberAsHex.padEnd(numberAsHex.length + 2, '0'); // pads hex with 2 zeros at the end
-    } else if (numberAsHex.length % 2 != 0) {
-        numberAsHex = numberAsHex.padStart(numberAsHex.length + 1, '0'); // pads hex with 1 zero at the beginning
-        numberAsHex = reverseString(swapCharacters(numberAsHex));
-    } else {
-        numberAsHex = reverseString(swapCharacters(numberAsHex));
+
+    // Prepends '0' to hex string if it's odd
+    if (numberAsHex.length % 2 === 1) {
+        numberAsHex = `0${numberAsHex}`;
     }
-    return numberAsHex;
-};
+
+    // Breaks the hex string in groups of 2 characters, which make up a byte
+    const numberAsHexArray = numberAsHex.match(/.{1,2}/g);
+    const msbPosition = numberAsHexArray.length * 8 - 1;
+    const mostSignificantBitIsOn = (number & (1 << msbPosition)) >> msbPosition === 1;
+
+    // Adds extra empty byte to indicate that the MSB was on
+    if (mostSignificantBitIsOn) {
+        numberAsHexArray.unshift('00');
+    }
+
+    // Returns the hex string in Little Endian (LE) format.
+    return numberAsHexArray.reverse().join('');
+}
 
 module.exports = {
     numberToHexStringLE

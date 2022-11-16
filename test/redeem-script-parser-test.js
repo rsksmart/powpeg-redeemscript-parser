@@ -4,6 +4,8 @@ const opcodes = require('bitcoinjs-lib').script.OPS;
 const EcPair = require('bitcoinjs-lib').ECPair;
 const expect = require('chai').expect;
 const { NETWORKS, ERROR_MESSAGES } = require('../constants');
+const rawRedeemScripts = require('./resources/test-redeem-scripts.json');
+const { numberToHexStringLE } = require('../utils');
 
 const getRandomPubkey = () =>  EcPair.makeRandom().publicKey;
 const decimalToHexString = (number) => number.toString(16);
@@ -167,5 +169,27 @@ describe('getAddressFromRedeemSript', () => {
             NETWORKS.REGTEST, 
             redeemScript
         )).to.be.eq(expectedPowpegAddress);
+    });
+});
+
+
+describe('test raw RedeemScripts from file', () => {
+    it('should return same redeemscript', () => {
+        const testRawRedeemScript = (rawRedeemScript) => {
+            const powpegErpRedeemScript = redeemScriptParser.getP2shErpRedeemScript(rawRedeemScript.mainFed, rawRedeemScript.emergencyFed, rawRedeemScript.timelock).toString('hex');
+            return rawRedeemScript.script == powpegErpRedeemScript;
+        }
+        expect(rawRedeemScripts.every(testRawRedeemScript)).to.be.true;
+    });
+});
+
+describe('test numberToHexStringLE utility method', () => {
+    it('should convert numbers to hex string in little endian format', () => {
+        const numbersArray = [32, 64, 123, 127, 128, 58766, 51138, 14907, 2149, 44175];
+        const expectedNumbersInHexStringLE = ["20", "40", "7b", "7f", "8000", "8ee500", "c2c700", "3b3a", "6508", "8fac00"];
+
+        for (let i = 0; i < numbersArray.length; i++) {
+            expect(numberToHexStringLE(numbersArray[i])).to.be.eq(expectedNumbersInHexStringLE[i]);
+        }
     });
 });
