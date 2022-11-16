@@ -46,7 +46,7 @@ const validateStandardRedeemScriptFormat = (redeemScript, pubKeys) => {
     checkPubKeysIncludedInRedeemScript(pubKeys, redeemScript);
 }
 
-const validateErpRedeemScriptFormat = (erpRedeemScript, pubKeys, erpPubKeys) => {
+const validateP2shErpRedeemScriptFormat = (erpRedeemScript, pubKeys, erpPubKeys) => {
     // First byte is OP_NOTIF
     expect(erpRedeemScript.substring(0,2)).to.be.eq(decimalToHexString(opcodes.OP_NOTIF));
     // Second to last byte is OP_CHECKMULTISIG
@@ -114,7 +114,7 @@ describe('getP2shErpRedeemScript', () => {
 
     it('should return a valid p2sh erp redeem script', () => {
         const p2shErpRedeemScript = redeemScriptParser.getP2shErpRedeemScript(publicKeys, p2shErpBtcPublicKeys, csvValue).toString('hex');
-        validateErpRedeemScriptFormat(p2shErpRedeemScript, publicKeys, p2shErpBtcPublicKeys);
+        validateP2shErpRedeemScriptFormat(p2shErpRedeemScript, publicKeys, p2shErpBtcPublicKeys);
     });
 });
 

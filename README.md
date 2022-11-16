@@ -33,7 +33,7 @@ This methods takes the parameterized powpegBtcPublicKeys, sorts them ascending a
 function getP2shErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, erpBtcPublicKeys: Array<string|Buffer>, csvValue: string): Buffer;
 ```
 
-Generates a P2SH ERP powpeg redeemscript. (this will become the default after the first powpeg change after IRIS)
+Generates a P2SH ERP powpeg redeemscript. (this will become the default after the first powpeg change after HOP 4.0.1)
 This method takes the parameterized powpegBtcPublicKeys, the emergency multisig public keys, and the delay value to generate the P2SH ERP redeeemscript.
 
 ### getFlyoverRedeemScript

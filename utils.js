@@ -25,7 +25,7 @@ const numberToHexStringLE = (number) => {
     }
 
     let numberAsHex = number.toString(16);
-    if (Number(numberAsBitString.charAt(0)) > 0 || Number(numberAsBitString.charAt(1)) > 0) {
+    if (Number(numberAsBitString.substring(0, 2))) {
         numberAsHex = reverseString(swapCharacters(numberAsHex));
         numberAsHex = numberAsHex.padEnd(numberAsHex.length + 2, '0'); // pads hex with 2 zeros at the end
     } else if (numberAsHex.length % 2 != 0) {
