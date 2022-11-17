@@ -14,10 +14,10 @@ export function getPowpegRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>)
 /**
  * generates custom ERP redeemscript, also uses getPowpegRedeemScript to generate base redeemScript
  * @param powpegBtcPublicKeys Array of pegnatories public keys to get redeemScript
- * @param p2shErpBtcPublicKeys Array of P2sh erp federation public keys to get redeemScript
+ * @param emergencyBtcPublicKeys Array of emergency multisig public keys to get redeemScript
  * @param csvValue CSV value in number format get redeemScript
  */
-export function getP2shErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, p2shErpBtcPublicKeys: Array<string|Buffer>, csvValue: number): Buffer;
+export function getP2shErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, emergencyBtcPublicKeys: Array<string|Buffer>, csvValue: number): Buffer;
 
 /**
  * generates a Flyover prefix and prepends it to the redeemscript received

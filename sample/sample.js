@@ -27,7 +27,7 @@ const csvValue = 52560;
     console.log('powpeg address', powpegAddress);
 
     const network = redeemScriptParser.NETWORKS.MAINNET;
-    console.log('powpeg redeemscript parser data:')
+    console.log('powpeg redeemscript parser data:');
 
     const powpegRedeemScript = redeemScriptParser.getPowpegRedeemScript(powpegPublicKeys);
     console.log('powpeg redeem script', powpegRedeemScript.toString('hex'));

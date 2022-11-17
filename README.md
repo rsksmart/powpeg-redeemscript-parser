@@ -30,7 +30,7 @@ This methods takes the parameterized powpegBtcPublicKeys, sorts them ascending a
 ### getP2shErpRedeemScript
 
 ```
-function getP2shErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, erpBtcPublicKeys: Array<string|Buffer>, csvValue: string): Buffer;
+function getP2shErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, emergencyBtcPublicKeys: Array<string|Buffer>, csvValue: number): Buffer;
 ```
 
 Generates a P2SH ERP powpeg redeemscript. (this will become the default after the first powpeg change after HOP 4.0.1)

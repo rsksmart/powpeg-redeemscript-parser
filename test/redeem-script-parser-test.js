@@ -3,9 +3,9 @@ const crypto = require('crypto');
 const opcodes = require('bitcoinjs-lib').script.OPS;
 const EcPair = require('bitcoinjs-lib').ECPair;
 const expect = require('chai').expect;
-const { NETWORKS, ERROR_MESSAGES } = require('../constants');
+const { NETWORKS, ERROR_MESSAGES, MAX_CSV_VALUE } = require('../constants');
 const rawRedeemScripts = require('./resources/test-redeem-scripts.json');
-const { numberToHexStringLE } = require('../utils');
+const { signedNumberToHexStringLE } = require('../utils');
 
 const getRandomPubkey = () =>  EcPair.makeRandom().publicKey;
 const decimalToHexString = (number) => number.toString(16);
@@ -48,17 +48,17 @@ const validateStandardRedeemScriptFormat = (redeemScript, pubKeys) => {
     checkPubKeysIncludedInRedeemScript(pubKeys, redeemScript);
 }
 
-const validateP2shErpRedeemScriptFormat = (erpRedeemScript, pubKeys, erpPubKeys) => {
+const validateP2shErpRedeemScriptFormat = (p2shErpRedeemScript, pubKeys, erpPubKeys) => {
     // First byte is OP_NOTIF
-    expect(erpRedeemScript.substring(0,2)).to.be.eq(decimalToHexString(opcodes.OP_NOTIF));
+    expect(p2shErpRedeemScript.substring(0,2)).to.be.eq(decimalToHexString(opcodes.OP_NOTIF));
     // Second to last byte is OP_CHECKMULTISIG
-    expect(erpRedeemScript.slice(-4).substring(0,2)).to.be.eq(decimalToHexString(opcodes.OP_CHECKMULTISIG));
+    expect(p2shErpRedeemScript.slice(-4).substring(0,2)).to.be.eq(decimalToHexString(opcodes.OP_CHECKMULTISIG));
     // Last byte is OP_ENDIF
-    expect(erpRedeemScript.slice(-2)).to.be.eq(decimalToHexString(opcodes.OP_ENDIF));
+    expect(p2shErpRedeemScript.slice(-2)).to.be.eq(decimalToHexString(opcodes.OP_ENDIF));
     
     // Public keys should be in the redeem script
-    checkPubKeysIncludedInRedeemScript(pubKeys, erpRedeemScript);
-    checkPubKeysIncludedInRedeemScript(erpPubKeys, erpRedeemScript);
+    checkPubKeysIncludedInRedeemScript(pubKeys, p2shErpRedeemScript);
+    checkPubKeysIncludedInRedeemScript(erpPubKeys, p2shErpRedeemScript);
 
     //TODO Check valid format of the rest of the erp redeem script (standard redeem script included, csv value, op_else, op_pushbytes, etc)
 }
@@ -91,7 +91,7 @@ describe('getP2shErpRedeemScript', () => {
         getRandomPubkey(),
         getRandomPubkey()
     ];
-    const p2shErpBtcPublicKeys = [
+    const emergencyBtcPublicKeys = [
         getRandomPubkey(),
         getRandomPubkey(),
     ];
@@ -110,13 +110,19 @@ describe('getP2shErpRedeemScript', () => {
         expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, getRandomPubkey(), null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
 
         // fail because there is no csv value
-        expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, p2shErpBtcPublicKeys, null)).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
-        expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, p2shErpBtcPublicKeys, '')).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
+        expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, null)).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
+        expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, '')).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
+
+        // fail because the csv value is invalid
+        expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, "12345")).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
+        expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, 0)).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
+        expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, -1)).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
+        expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, MAX_CSV_VALUE + 1)).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
     });
 
     it('should return a valid p2sh erp redeem script', () => {
-        const p2shErpRedeemScript = redeemScriptParser.getP2shErpRedeemScript(publicKeys, p2shErpBtcPublicKeys, csvValue).toString('hex');
-        validateP2shErpRedeemScriptFormat(p2shErpRedeemScript, publicKeys, p2shErpBtcPublicKeys);
+        const p2shErpRedeemScript = redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, csvValue).toString('hex');
+        validateP2shErpRedeemScriptFormat(p2shErpRedeemScript, publicKeys, emergencyBtcPublicKeys);
     });
 });
 
@@ -176,8 +182,8 @@ describe('getAddressFromRedeemSript', () => {
 describe('test raw RedeemScripts from file', () => {
     it('should return same redeemscript', () => {
         const testRawRedeemScript = (rawRedeemScript) => {
-            const powpegErpRedeemScript = redeemScriptParser.getP2shErpRedeemScript(rawRedeemScript.mainFed, rawRedeemScript.emergencyFed, rawRedeemScript.timelock).toString('hex');
-            return rawRedeemScript.script == powpegErpRedeemScript;
+            const powpegP2shErpRedeemScript = redeemScriptParser.getP2shErpRedeemScript(rawRedeemScript.mainFed, rawRedeemScript.emergencyFed, rawRedeemScript.timelock).toString('hex');
+            return rawRedeemScript.script == powpegP2shErpRedeemScript;
         }
         expect(rawRedeemScripts.every(testRawRedeemScript)).to.be.true;
     });
@@ -189,7 +195,7 @@ describe('test numberToHexStringLE utility method', () => {
         const expectedNumbersInHexStringLE = ["20", "40", "7b", "7f", "8000", "8ee500", "c2c700", "3b3a", "6508", "8fac00"];
 
         for (let i = 0; i < numbersArray.length; i++) {
-            expect(numberToHexStringLE(numbersArray[i])).to.be.eq(expectedNumbersInHexStringLE[i]);
+            expect(signedNumberToHexStringLE(numbersArray[i])).to.be.eq(expectedNumbersInHexStringLE[i]);
         }
     });
 });

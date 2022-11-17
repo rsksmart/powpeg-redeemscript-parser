@@ -1,6 +1,17 @@
-const numberToHexStringLE = (number) => {
+const { NETWORKS } = require('./constants');
 
-    let numberAsHex = number.toString(16);
+const numberToHexString = (number) => number.toString(16);
+
+const isValidNetwork = (network) => {
+    if (!NETWORKS[network]) {
+        throw new Error(`Network ${network} is not valid value (valid values are: ${Object.keys(NETWORKS)})`);
+    }
+    return true;
+};
+
+const signedNumberToHexStringLE = (number) => {
+
+    let numberAsHex = numberToHexString(number);
 
     // Prepends '0' to hex string if it's odd
     if (numberAsHex.length % 2 === 1) {
@@ -22,5 +33,7 @@ const numberToHexStringLE = (number) => {
 }
 
 module.exports = {
-    numberToHexStringLE
+    numberToHexString,
+    isValidNetwork,
+    signedNumberToHexStringLE
 }
