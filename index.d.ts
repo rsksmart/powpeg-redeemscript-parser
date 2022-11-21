@@ -14,17 +14,10 @@ export function getPowpegRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>)
 /**
  * generates custom ERP redeemscript, also uses getPowpegRedeemScript to generate base redeemScript
  * @param powpegBtcPublicKeys Array of pegnatories public keys to get redeemScript
- * @param erpBtcPublicKeys Array of erp federation public keys to get redeemScript
- * @param csvValue CSV value to get redeemScript
+ * @param emergencyBtcPublicKeys Array of emergency multisig public keys to get redeemScript
+ * @param csvValue CSV value in number format get redeemScript
  */
-export function getErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, erpBtcPublicKeys: Array<string|Buffer>, csvValue: string): Buffer;
-
-/**
- * generates a Flyover prefix and prepends it to the redeemscript generated through getPowpegRedeemScript
- * @param powpegBtcPublicKeys Array of pegnatories public keys to get redeemScript
- * @param derivationArgsHash String of 64 characters representing a derivation hash for Flyover protocol
- */
-export function getFlyoverRedeemScriptFromPublicKeys(powpegBtcPublicKeys: Array<string|Buffer>, derivationArgsHash: string): Buffer;
+export function getP2shErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, emergencyBtcPublicKeys: Array<string|Buffer>, csvValue: number): Buffer;
 
 /**
  * generates a Flyover prefix and prepends it to the redeemscript received
@@ -32,15 +25,6 @@ export function getFlyoverRedeemScriptFromPublicKeys(powpegBtcPublicKeys: Array<
  * @param derivationArgsHash String of 64 characters representing a derivation hash for Flyover protocol
  */
  export function getFlyoverRedeemScript(powpegRedeemScript: Buffer, derivationArgsHash: string): Buffer;
-
-/**
- * generates a Flyover prefix generates, then a custom ERP Flyover redeemscript, also uses getPowpegRedeemScript to generate base redeemScript
- * @param powpegBtcPublicKeys Array of pegnatories public keys to get redeemScript
- * @param erpBtcPublicKeys Array of erp federation public keys to get redeemScript
- * @param csvValue CSV value to get redeemScript
- * @param derivationArgsHash String of 64 characters representing a derivation hash for Flyover protocol
- */
- export function getFlyoverErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, erpBtcPublicKeys: Array<string|Buffer>, csvValue: string, derivationArgsHash: string): Buffer;
 
  /**
   * generates a p2sh BTC address for the parameterized network using the parameterized redeemscript
