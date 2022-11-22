@@ -7,7 +7,8 @@ const { NETWORKS, ERROR_MESSAGES, MAX_CSV_VALUE } = require('../constants');
 const rawRedeemScripts = require('./resources/test-redeem-scripts.json');
 const { signedNumberToHexStringLE } = require('../utils');
 
-const getRandomPubkey = () =>  EcPair.makeRandom().publicKey;
+const hexToDecimal = hex => parseInt(hex, 16);
+const getRandomPubkey = () => EcPair.makeRandom().publicKey.toString('hex');
 const decimalToHexString = (number) => number.toString(16);
 const decimalToOpCode = {
     1: opcodes.OP_1,
@@ -48,19 +49,56 @@ const validateStandardRedeemScriptFormat = (redeemScript, pubKeys) => {
     checkPubKeysIncludedInRedeemScript(pubKeys, redeemScript);
 }
 
-const validateP2shErpRedeemScriptFormat = (p2shErpRedeemScript, pubKeys, erpPubKeys) => {
-    // First byte is OP_NOTIF
-    expect(p2shErpRedeemScript.substring(0,2)).to.be.eq(decimalToHexString(opcodes.OP_NOTIF));
-    // Second to last byte is OP_CHECKMULTISIG
-    expect(p2shErpRedeemScript.slice(-4).substring(0,2)).to.be.eq(decimalToHexString(opcodes.OP_CHECKMULTISIG));
-    // Last byte is OP_ENDIF
-    expect(p2shErpRedeemScript.slice(-2)).to.be.eq(decimalToHexString(opcodes.OP_ENDIF));
-    
-    // Public keys should be in the redeem script
-    checkPubKeysIncludedInRedeemScript(pubKeys, p2shErpRedeemScript);
-    checkPubKeysIncludedInRedeemScript(erpPubKeys, p2shErpRedeemScript);
+const validateP2shErpRedeemScriptFormat = (p2shErpRedeemScript, pubKeys, erpPubKeys, csvValue) => {
 
-    //TODO Check valid format of the rest of the erp redeem script (standard redeem script included, csv value, op_else, op_pushbytes, etc)
+    const OP_M = parseInt(pubKeys.length / 2) + 1;
+    const OP_N = pubKeys.length;
+
+    const ERP_OP_M = parseInt(erpPubKeys.length / 2) + 1;
+    const ERP_OP_N = erpPubKeys.length;
+
+    const bufferP2shErpRedeemScript = Buffer.from(p2shErpRedeemScript, 'hex');
+
+    let position = 1;
+    //  First byte is OP_NOTIF
+    expect(bufferP2shErpRedeemScript.subarray(0, position).toString('hex')).to.be.eq(decimalToHexString(opcodes.OP_NOTIF));
+    expect(bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex')).to.be.eq(decimalToHexString(decimalToOpCode[OP_M]));
+
+    let pubKeyLengthHex = bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex');
+    // Check Publickeys in P2shErpRedeemScript
+    while (pubKeys.length >= 0 && pubKeyLengthHex == "21") {
+        let pubKeyLength = hexToDecimal(pubKeyLengthHex);
+        let pubKey = bufferP2shErpRedeemScript.subarray(position, position + pubKeyLength).toString('hex');
+        expect(pubKeys).to.include(pubKey);
+        position = position + pubKeyLength;
+        pubKeyLengthHex = bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex');
+    }
+
+    expect(pubKeyLengthHex).to.be.eq(decimalToHexString(decimalToOpCode[OP_N]));
+    expect(bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex')).to.be.eq(decimalToHexString(opcodes.OP_CHECKMULTISIG));
+    expect(bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex')).to.be.eq(decimalToHexString(opcodes.OP_ELSE));
+    expect(bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex')).to.be.eq(`0${signedNumberToHexStringLE(csvValue).length / 2}`);
+    const csvValueOffset = position + 3;
+    expect(bufferP2shErpRedeemScript.subarray(position, csvValueOffset).toString('hex')).to.be.eq(signedNumberToHexStringLE(csvValue));
+    position = csvValueOffset;
+    expect(bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex')).to.be.eq(decimalToHexString(opcodes.OP_CHECKSEQUENCEVERIFY));
+    expect(bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex')).to.be.eq(decimalToHexString(opcodes.OP_DROP));
+    expect(bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex')).to.be.eq(decimalToHexString(decimalToOpCode[ERP_OP_M]));
+
+    pubKeyLengthHex = bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex');
+    // Check ERP Publickeys in P2shErpRedeemScript
+    while (erpPubKeys.length >= 0 && pubKeyLengthHex == "21") {
+        let pubKeyLength = hexToDecimal(pubKeyLengthHex);
+        let pubKey = bufferP2shErpRedeemScript.subarray(position, position + pubKeyLength).toString('hex');
+        expect(erpPubKeys).to.include(pubKey);
+        position = position + pubKeyLength;
+        pubKeyLengthHex = bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex');
+    }
+
+    expect(pubKeyLengthHex).to.be.eq(decimalToHexString(decimalToOpCode[ERP_OP_N]));
+    expect(bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex')).to.be.eq(decimalToHexString(opcodes.OP_CHECKMULTISIG));
+    //  Last byte is OP_ENDIF
+    expect(bufferP2shErpRedeemScript.subarray(position, ++position).toString('hex')).to.be.eq(decimalToHexString(opcodes.OP_ENDIF));
 }
 
 describe('getPowpegRedeemScript', () => {
@@ -122,7 +160,7 @@ describe('getP2shErpRedeemScript', () => {
 
     it('should return a valid p2sh erp redeem script', () => {
         const p2shErpRedeemScript = redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, csvValue).toString('hex');
-        validateP2shErpRedeemScriptFormat(p2shErpRedeemScript, publicKeys, emergencyBtcPublicKeys);
+        validateP2shErpRedeemScriptFormat(p2shErpRedeemScript, publicKeys, emergencyBtcPublicKeys, csvValue);
     });
 });
 
