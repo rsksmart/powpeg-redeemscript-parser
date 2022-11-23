@@ -1,6 +1,10 @@
 const { NETWORKS } = require('./constants');
+const EcPair = require('bitcoinjs-lib').ECPair;
 
 const numberToHexString = (number) => number.toString(16);
+const hexToDecimal = hex => parseInt(hex, 16);
+const getRandomPubkey = () => EcPair.makeRandom().publicKey.toString('hex');
+const decimalToHexString = (number) => number.toString(16);
 
 const isValidNetwork = (network) => {
     if (!NETWORKS[network]) {
@@ -34,6 +38,9 @@ const signedNumberToHexStringLE = (number) => {
 
 module.exports = {
     numberToHexString,
+    hexToDecimal,
+    getRandomPubkey,
+    decimalToHexString,
     isValidNetwork,
     signedNumberToHexStringLE
 }
