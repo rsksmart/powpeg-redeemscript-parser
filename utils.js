@@ -6,6 +6,8 @@ const numberToHexString = (number) => number.toString(16);
 const hexToDecimal = hex => parseInt(hex, 16);
 const getRandomPubkey = () => EcPair.makeRandom().publicKey.toString('hex');
 
+const COUNT_OF_BITS_IN_BYTE = 8;
+
 const decimalToOpCode = {
     1: opcodes.OP_1,
     2: opcodes.OP_2,
@@ -32,28 +34,32 @@ const isValidNetwork = (network) => {
     return true;
 };
 
-const signedNumberToHexStringLE = (number) => {
+/**
+ *
+ * @param {number} number to convert to a hex string representation in LE format
+ * @returns {string} returns the string hex representation of the number in LE format
+ * 
+ */
+ const signedNumberToHexStringLE = number => {
+    const bitCount = Math.log2(number);
+    const byteLength = parseInt(bitCount / COUNT_OF_BITS_IN_BYTE + 1);
+    const oneByteMask = 0xFF;
+    const byteArray = [];
 
-    let numberAsHex = numberToHexString(number);
-
-    // Prepends '0' to hex string if it's odd
-    if (numberAsHex.length % 2 === 1) {
-        numberAsHex = `0${numberAsHex}`;
+    for(let i = 0; i < byteLength; i++) {
+        const nextByte = (number >> (i * COUNT_OF_BITS_IN_BYTE)) & oneByteMask;
+        byteArray.push(nextByte);
     }
 
-    // Breaks the hex string in groups of 2 characters, which make up a byte
-    const numberAsHexArray = numberAsHex.match(/.{1,2}/g);
-    const msbPosition = numberAsHexArray.length * 8 - 1;
-    const mostSignificantBitIsOn = (number & (1 << msbPosition)) >> msbPosition === 1;
+    const mostSignificantBitPosition = byteLength * COUNT_OF_BITS_IN_BYTE - 1;
+    const mostSignificantBitIsOn = (number & (1 << mostSignificantBitPosition)) > 0;
 
-    // Adds extra empty byte to indicate that the MSB was on
     if (mostSignificantBitIsOn) {
-        numberAsHexArray.unshift('00');
+        byteArray.push(0);
     }
 
-    // Returns the hex string in Little Endian (LE) format.
-    return numberAsHexArray.reverse().join('');
-}
+    return Buffer.from(byteArray).toString("hex");
+};
 
 module.exports = {
     numberToHexString,
