@@ -37,7 +37,8 @@ const isValidNetwork = (network) => {
 /**
  *
  * @param {number} number to convert to a hex string representation in LE format
- * @returns {string} returns the string hex representation of the number in LE format
+ * @returns {string} returns the string hex representation of the signed number in LE format.
+ * If the most significant bit equals 1 it will add an extra 0 byte
  * 
  */
  const signedNumberToHexStringLE = number => {
