@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
-    "test-coverage": "nyc --check-coverage  --branches 100 --statements 100 --lines 100 mocha test/*.js"
+    "test": "mocha --timeout 10000",
+    "test-coverage": "nyc --check-coverage  --branches 100 --statements 100 --lines 100 mocha test/*.js --timeout 10000"
   },
   "author": "",
   "license": "ISC",

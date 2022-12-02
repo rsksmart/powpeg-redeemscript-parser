@@ -6,6 +6,8 @@ const numberToHexString = (number) => number.toString(16);
 const hexToDecimal = hex => parseInt(hex, 16);
 const getRandomPubkey = () => EcPair.makeRandom().publicKey.toString('hex');
 
+const COUNT_OF_BITS_IN_BYTE = 8;
+
 const decimalToOpCode = {
     1: opcodes.OP_1,
     2: opcodes.OP_2,
@@ -32,28 +34,43 @@ const isValidNetwork = (network) => {
     return true;
 };
 
-const signedNumberToHexStringLE = (number) => {
+/**
+ *
+ * @param {number} number to convert to a hex string representation in LE format
+ * @returns {string} returns the string hex representation of the signed number in LE format.
+ * If the most significant bit equals 1 it will add an extra 0 byte
+ * 
+ */
+ const signedNumberToHexStringLE = number => {
+    // `Math.log2` is useful to get the count of significant bits in a number, - 1.
+    // If number has the binary 101010 which has 6 significant bits, Math.log2(number) would return 5 (6 - 1).
+    // This happens because the `Math.log2` function does an operation similar to dividing number by 2 until it reaches 1,
+    // which yields the number of significant bits, minus 1, due to the power of 2 nature of binary.
+    const bitCount = Math.log2(number);
+    const byteLength = parseInt(bitCount / COUNT_OF_BITS_IN_BYTE + 1);
+    const oneByteMask = 0xFF;
+    const byteArray = [];
 
-    let numberAsHex = numberToHexString(number);
-
-    // Prepends '0' to hex string if it's odd
-    if (numberAsHex.length % 2 === 1) {
-        numberAsHex = `0${numberAsHex}`;
+    for(let i = 0; i < byteLength; i++) {
+        // right-shifts `number` by `i * COUNT_OF_BITS_IN_BYTE` to bring the next byte to be the first byte,
+        // copies it and adds it to `byteArray`, and keeps doing that until all bytes are copied.
+        // When `i` is 0, then `i * COUNT_OF_BITS_IN_BYTE` is 0 and hence `number` does not git shifted and we copy the first byte.
+        const nextByte = (number >> (i * COUNT_OF_BITS_IN_BYTE)) & oneByteMask;
+        byteArray.push(nextByte);
     }
 
-    // Breaks the hex string in groups of 2 characters, which make up a byte
-    const numberAsHexArray = numberAsHex.match(/.{1,2}/g);
-    const msbPosition = numberAsHexArray.length * 8 - 1;
-    const mostSignificantBitIsOn = (number & (1 << msbPosition)) >> msbPosition === 1;
+    const mostSignificantBitPosition = byteLength * COUNT_OF_BITS_IN_BYTE - 1;
+    // Checks if the most significant bit (MSB) is on (1) by left-shifting 1 to take it to
+    // the post significant bit and do an `&` bitwise operation. If the result is greater than 0,
+    // then the bit is on.
+    const mostSignificantBitIsOn = (number & (1 << mostSignificantBitPosition)) > 0;
 
-    // Adds extra empty byte to indicate that the MSB was on
     if (mostSignificantBitIsOn) {
-        numberAsHexArray.unshift('00');
+        byteArray.push(0);
     }
 
-    // Returns the hex string in Little Endian (LE) format.
-    return numberAsHexArray.reverse().join('');
-}
+    return Buffer.from(byteArray).toString("hex");
+};
 
 module.exports = {
     numberToHexString,
