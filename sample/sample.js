@@ -15,32 +15,33 @@ const csvValue = 52560;
 (async () => {
     const bridgeClient = bridge.build(new web3('https://public-node.rsk.co/'));
     let powpegPublicKeys = [];
-    console.log('Bridge data:');
+    console.log('\nBridge data:');
     const powpegSize = await bridgeClient.methods.getFederationSize().call();
-    console.log('powpeg members', powpegSize);
+    console.log('\nPowpeg members:', powpegSize, '\n');
     for (let i = 0; i < powpegSize; i++) {
         let publicKey = await bridgeClient.methods.getFederatorPublicKeyOfType(i, 'btc').call();
         powpegPublicKeys.push(publicKey.slice(2));
         console.log(`= pubkey[${i+1}] = ${publicKey}`);
     }
     const powpegAddress = await bridgeClient.methods.getFederationAddress().call();
-    console.log('powpeg address', powpegAddress);
+
+    console.log('\nPowpeg address:', powpegAddress);
 
     const network = redeemScriptParser.NETWORKS.MAINNET;
-    console.log('powpeg redeemscript parser data:');
+    console.log('\nPowpeg redeemscript parser data:');
 
     const powpegRedeemScript = redeemScriptParser.getPowpegRedeemScript(powpegPublicKeys);
-    console.log('powpeg redeem script', powpegRedeemScript.toString('hex'));
-    console.log('powpeg address', redeemScriptParser.getAddressFromRedeemScript(network, powpegRedeemScript));
+    console.log('\nPowpeg redeem script:', powpegRedeemScript.toString('hex'));
+    console.log('\nPowpeg address:', redeemScriptParser.getAddressFromRedeemScript(network, powpegRedeemScript));
 
     const p2shErpRedeemScript = redeemScriptParser.getP2shErpRedeemScript(powpegPublicKeys, erpPubKeys, csvValue);
-    console.log('P2sh ERP redeem script', p2shErpRedeemScript.toString('hex'));
-    console.log('P2sh ERP address', redeemScriptParser.getAddressFromRedeemScript(network, p2shErpRedeemScript));
+    console.log('\nP2sh ERP redeem script:', p2shErpRedeemScript.toString('hex'));
+    console.log('\nP2sh ERP address:', redeemScriptParser.getAddressFromRedeemScript(network, p2shErpRedeemScript));
 
     const randomFlyoverHash = crypto.randomBytes(32).toString('hex');
-    console.log('random Flyover derivation hash', randomFlyoverHash);
+    console.log('\nRandom Flyover derivation hash:', randomFlyoverHash);
 
     const flyoverPowpegRedeemScript = redeemScriptParser.getFlyoverRedeemScript(powpegRedeemScript, randomFlyoverHash);
-    console.log('flyover powpeg redeem script', flyoverPowpegRedeemScript.toString('hex'));
-    console.log('flyover powpeg address', redeemScriptParser.getAddressFromRedeemScript(network, flyoverPowpegRedeemScript));
+    console.log('\nFlyover powpeg redeem script:', flyoverPowpegRedeemScript.toString('hex'));
+    console.log('\nFlyover powpeg address:', redeemScriptParser.getAddressFromRedeemScript(network, flyoverPowpegRedeemScript));
 })();

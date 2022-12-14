@@ -1,11 +1,15 @@
 {
-  "name": "powpeg-redeemscript-parser",
-  "version": "0.4.0-beta",
-  "description": "",
+  "name": "@rsksmart/powpeg-redeemscript-parser",
+  "version": "1.0.0",
+  "description": "This library helps obtaining the redeem script of the RSK powpeg as well as generating its address.",
   "main": "index.js",
   "scripts": {
     "test": "mocha --timeout 10000",
     "test-coverage": "nyc --check-coverage  --branches 100 --statements 100 --lines 100 mocha test/*.js --timeout 10000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rsksmart/powpeg-redeemscript-parser.git"
   },
   "author": "",
   "license": "ISC",
