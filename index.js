@@ -36,16 +36,16 @@ const getRedeemScriptFromBtcPublicKeys = (btcPublicKeys) => {
 /**
  * 
  * @param {String[] | Buffer[]} powpegBtcPublicKeys 
- * @param {String[] | Buffer[]} p2shErpBtcPublicKeys 
+ * @param {String[] | Buffer[]} erpBtcPublicKeys 
  * @param {Number} csvValue 
  * @returns {Buffer}
  */
-const getP2shErpRedeemScript = (powpegBtcPublicKeys, p2shErpBtcPublicKeys, csvValue) => {
+const getP2shErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue) => {
 
     if (!Array.isArray(powpegBtcPublicKeys)) {
         throw new Error(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
     }
-    if (!Array.isArray(p2shErpBtcPublicKeys)) {
+    if (!Array.isArray(erpBtcPublicKeys)) {
         throw new Error(ERROR_MESSAGES.INVALID_P2SH_ERP_PUBLIC_KEYS);
     }
 
@@ -53,16 +53,16 @@ const getP2shErpRedeemScript = (powpegBtcPublicKeys, p2shErpBtcPublicKeys, csvVa
         throw new Error(ERROR_MESSAGES.INVALID_CSV_VALUE);
     }
 
-    const csvLeHexValue = signedNumberToHexStringLE(csvValue);
+    const csvLEHexValue = signedNumberToHexStringLE(csvValue);
 
-    const defaultRedeemScript = getPowpegRedeemScript(powpegBtcPublicKeys).toString('hex');
-    const emergencyRedeemScript = getRedeemScriptFromBtcPublicKeys(p2shErpBtcPublicKeys).toString('hex');
+    const defaultRedeemScript = getRedeemScriptFromBtcPublicKeys(powpegBtcPublicKeys).toString('hex');
+    const emergencyRedeemScript = getRedeemScriptFromBtcPublicKeys(erpBtcPublicKeys).toString('hex');
 
     const bufferLength = parseInt(
         1 + 
         defaultRedeemScript.length / 2 + 
         2 + 
-        csvLeHexValue.length / 2 + 
+        csvLEHexValue.length / 2 + 
         2 + 
         emergencyRedeemScript.length / 2 + 
         1
@@ -75,10 +75,10 @@ const getP2shErpRedeemScript = (powpegBtcPublicKeys, p2shErpBtcPublicKeys, csvVa
     let position = 1 + parseInt(defaultRedeemScript.length / 2);
     redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ELSE), position, 'hex');
     position+= 1;
-    redeemScript.write(`0${csvLeHexValue.length / 2}`, position, 'hex'); // OP_PUSHBYTES
+    redeemScript.write(`0${csvLEHexValue.length / 2}`, position, 'hex'); // OP_PUSHBYTES
     position+= 1;
-    redeemScript.write(csvLeHexValue, position, 'hex');
-    position+= csvLeHexValue.length / 2;
+    redeemScript.write(csvLEHexValue, position, 'hex');
+    position+= csvLEHexValue.length / 2;
     redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_CHECKSEQUENCEVERIFY), position, 'hex');
     position+= 1;
     redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_DROP), position, 'hex');
