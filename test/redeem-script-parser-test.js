@@ -115,7 +115,7 @@ describe('getP2shErpRedeemScript', () => {
         expect(() => redeemScriptParser.getP2shErpRedeemScript('nothing')).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
         expect(() => redeemScriptParser.getP2shErpRedeemScript(null, null, null)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
 
-        // fail because there are no p2sh erp public keys
+        // fail because there are no erp public keys
         expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, null, null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
         expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, '', null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
         expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, getRandomPubkey(), null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
