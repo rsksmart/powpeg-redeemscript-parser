@@ -47,14 +47,14 @@ const isValidNetwork = (network) => {
 
     const bitCount = Math.log2(number);
     const bytesCount = parseInt(bitCount / COUNT_OF_BITS_IN_BYTE + 1);
-    const leBytesArray = [];
+    const bytesInLE = [];
 
     for(let i = 0; i < bytesCount; i++) {
         const nextByteStartIndex = i * COUNT_OF_BITS_IN_BYTE;
         const oneByteMaskMovedAtNextByteStartIndex = ONE_BYTE_MASK << nextByteStartIndex;
         const nextByteCopyAtOriginalPosition = number & oneByteMaskMovedAtNextByteStartIndex;
         const nextByteCopyMovedAtStart = nextByteCopyAtOriginalPosition >> nextByteStartIndex;
-        leBytesArray.push(nextByteCopyMovedAtStart);
+        bytesInLE.push(nextByteCopyMovedAtStart);
     }
 
     const mostSignificantBitPosition = bytesCount * COUNT_OF_BITS_IN_BYTE - 1;
@@ -63,10 +63,10 @@ const isValidNetwork = (network) => {
     const mostSignificantBitIsOn = mostSignificantBitCopy > 0;
 
     if (mostSignificantBitIsOn) {
-        leBytesArray.push(0);
+        bytesInLE.push(0);
     }
 
-    return Buffer.from(leBytesArray).toString("hex");
+    return Buffer.from(bytesInLE).toString("hex");
 };
 
 module.exports = {
