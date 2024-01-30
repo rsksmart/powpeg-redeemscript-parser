@@ -115,7 +115,7 @@ describe('getP2shErpRedeemScript', () => {
         expect(() => redeemScriptParser.getP2shErpRedeemScript('nothing')).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
         expect(() => redeemScriptParser.getP2shErpRedeemScript(null, null, null)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
 
-        // fail because there are no p2sh erp public keys
+        // fail because there are no erp public keys
         expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, null, null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
         expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, '', null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
         expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, getRandomPubkey(), null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
@@ -129,12 +129,22 @@ describe('getP2shErpRedeemScript', () => {
         expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, 0)).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
         expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, -1)).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
         expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, MAX_CSV_VALUE + 1)).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
+        expect(() => redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, csvValue - 0.5)).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
+
     });
 
     it('should return a valid p2sh erp redeem script', () => {
         const p2shErpRedeemScript = redeemScriptParser.getP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, csvValue);
         validateP2shErpRedeemScriptFormat(p2shErpRedeemScript, publicKeys, emergencyBtcPublicKeys, csvValue);
     });
+
+    it('should return a valid p2sh erp redeem script passing public keys in a Buffer array', () => {
+        const publicKeysBuffer = publicKeys.map(hex => Buffer.from(hex, 'hex'));
+        const emergencyBtcPublicKeysBuffer = emergencyBtcPublicKeys.map(hex => Buffer.from(hex, 'hex'));
+        const p2shErpRedeemScript = redeemScriptParser.getP2shErpRedeemScript(publicKeysBuffer, emergencyBtcPublicKeysBuffer, csvValue);
+        validateP2shErpRedeemScriptFormat(p2shErpRedeemScript, publicKeys, emergencyBtcPublicKeys, csvValue);
+    });
+
 });
 
 describe('getFlyoverRedeemScript', () => {
