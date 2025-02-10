@@ -49,4 +49,4 @@ function getAddressFromRedeemScript(network: NETWORKS, redeemScript: Buffer): st
 
 Generates a base58 address for the P2SH calculated from the provided redeemscript. The network is used to set the network prefix of the address.
 
-For any comments or suggestions, feel free to contribute or reach out at our [open slack](https://developers.rsk.co/slack).
+For any comments or suggestions, feel free to contribute or reach out at our [Discord server](https://discord.gg/rootstock).
