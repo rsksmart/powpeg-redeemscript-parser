@@ -1,6 +1,6 @@
 {
   "name": "@rsksmart/powpeg-redeemscript-parser",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "This library helps obtaining the redeem script of the RSK powpeg as well as generating its address.",
   "main": "index.js",
   "scripts": {
