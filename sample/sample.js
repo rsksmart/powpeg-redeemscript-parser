@@ -1,6 +1,6 @@
 const redeemScriptParser = require('../index');
 const bridge = require('@rsksmart/rsk-precompiled-abis').bridge;
-const web3 = require('web3');
+const { ethers } = require('ethers');
 const crypto = require('crypto');
 
 const erpPubKeys = [
@@ -13,23 +13,24 @@ const erpPubKeys = [
 const csvValue = 52560;
 
 (async () => {
+    const rskClient = new ethers.JsonRpcProvider('https://public-node.rsk.co');
+    const bridgeClient = new ethers.Contract(bridge.address, bridge.abi, rskClient);
 
-    const bridgeClient = bridge.build(new web3('https://public-node.rsk.co/'));
     const powpegPublicKeys = [];
 
     console.log('\nBridge data:');
 
-    const powpegSize = await bridgeClient.methods.getFederationSize().call();
+    const powpegSize = await bridgeClient.getFederationSize();
 
-    console.log('\nPowpeg members:', powpegSize, '\n');
+    console.log('\nPowpeg members:', Number(powpegSize), '\n');
 
     for (let i = 0; i < powpegSize; i++) {
-        const publicKey = await bridgeClient.methods.getFederatorPublicKeyOfType(i, 'btc').call();
+        const publicKey = await bridgeClient.getFederatorPublicKeyOfType(i, 'btc');
         powpegPublicKeys.push(publicKey.slice(2));
         console.log(`= pubkey[${i+1}] = ${publicKey}`);
     }
 
-    const currentFederationAddress = await bridgeClient.methods.getFederationAddress().call();
+    const currentFederationAddress = await bridgeClient.getFederationAddress();
 
     console.log('\nCurrent federation address:', currentFederationAddress);
 
