@@ -1,4 +1,5 @@
 [![CI/CD Using Github actions workflow](https://github.com/rsksmart/powpeg-redeemscript-parser/actions/workflows/workflow.yml/badge.svg)](https://github.com/rsksmart/powpeg-redeemscript-parser/actions/workflows/workflow.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rsksmart/powpeg-redeemscript-parser/badge)](https://scorecard.dev/viewer/?uri=github.com/rsksmart/powpeg-redeemscript-parser)
 
 # powpeg-redeemscript-parser
 
