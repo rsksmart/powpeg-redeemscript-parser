@@ -19,7 +19,7 @@
   "devDependencies": {
     "@rsksmart/rsk-precompiled-abis": "^7.1.0-LOVELL",
     "chai": "^4.3.4",
-    "mocha": "^10.1.0",
+    "mocha": "^11.2.2",
     "nyc": "^15.1.0",
     "ethers": "^6.13.5"
   }
