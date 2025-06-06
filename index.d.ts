@@ -32,3 +32,10 @@ export function getP2shErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>
   * @param redeemScript a calculated redeemscript
   */
  export function getAddressFromRedeemScript(network: NETWORKS, redeemScript: Buffer): string;
+
+ /**
+  * generates a p2sh p2wsh BTC address for the parameterized network using the parameterized redeemscript
+  * @param network network is used to select the proper ERP constants
+  * @param redeemScript a calculated redeemscript
+  */
+ export function getP2shP2wshAddressFromRedeemScript(network: NETWORKS, redeemScript: Buffer): string;
