@@ -226,10 +226,10 @@ describe('getP2shP2wshAddressFromRedeemScript', () => {
             '020aa547e2226a117cd52da9d7c8c917287990a5334e99aaf99fa079a5f4ab35d9', // Generated with seed: segwitFed5
             '021f8ffe926a8cba95d69127dbadbe95ccd2f4c6a9dc53e7d97ca8c9450e904148', // Generated with seed: segwitFed6
         ];
-        const expectedPowpegAddress = '2N6B6XU32Hh7G7FP1F1NF6FgQVHXZbB4NX8';
+        const expectedPowpegAddress = '3EctTj6zgEbuuTkTZskNUJh9GwKPtHAqZR';
         const redeemScript = redeemScriptParser.getP2shErpRedeemScript(pubKeys, ERP_PUBKEYS, ERP_CSV_VALUE);
         const actualAddress = redeemScriptParser.getP2shP2wshAddressFromRedeemScript(
-            NETWORKS.REGTEST, 
+            NETWORKS.MAINNET, 
             redeemScript
         );
         expect(actualAddress).to.be.eq(expectedPowpegAddress);
