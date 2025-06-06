@@ -88,7 +88,7 @@ const getP2shErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue)
     redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ENDIF), position, 'hex');
 
     return Buffer.from(redeemScript, 'hex');
-}
+};
 
 /**
  * 
@@ -122,7 +122,7 @@ const getFlyoverRedeemScript = (powpegRedeemScript, derivationArgsHash) => {
         getFlyoverPrefix(derivationArgsHash), 
         powpegRedeemScript
     ]);
-}
+};
 
 /**
  * 
@@ -139,7 +139,7 @@ const getAddressFromRedeemScript = (network, redeemScript) => {
 
     const doubleHash = bitcoin.crypto.ripemd160(bitcoin.crypto.sha256(redeemScript));
     return bitcoin.address.toBase58Check(doubleHash, bitcoinjsNetworks[network].scriptHash);
-}
+};
 
 /**
  * 

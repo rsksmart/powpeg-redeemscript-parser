@@ -42,12 +42,20 @@ function getFlyoverRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, deriv
 Generates a Flyover redeemscript.
 This method expects a derivation arguments hash that represents the flyover protocol operation. With this it generates a prefix that is then joined with the regular powpeg redeemscript.
 
-### getAddressFromRedeemScript
+### getAddressFromRedeemScript
 
 ```ts
 function getAddressFromRedeemScript(network: NETWORKS, redeemScript: Buffer): string;
 ```
 
 Generates a base58 address for the P2SH calculated from the provided redeemscript. The network is used to set the network prefix of the address.
+
+### getP2shP2wshAddressFromRedeemScript
+
+```ts
+function getAddressFromRedeemScript(network: NETWORKS, redeemScript: Buffer): string;
+```
+
+Generates a base58 address for the P2SH P2WSH calculated from the provided redeemscript. The network is used to set the network prefix of the address.
 
 For any comments or suggestions, feel free to contribute or reach out at our [Discord server](https://discord.gg/rootstock).
