@@ -6,6 +6,18 @@ const { NETWORKS, ERROR_MESSAGES, MAX_CSV_VALUE } = require('../constants');
 const rawRedeemScripts = require('./resources/test-redeem-scripts.json');
 const { signedNumberToHexStringLE, hexToDecimal, getRandomPubkey, numberToHexString, decimalToOpCode } = require('../utils');
 
+// Regtest ERP public keys
+const ERP_PUBKEYS = [
+  '029cecea902067992d52c38b28bf0bb2345bda9b21eca76b16a17c477a64e43301',
+  '03284178e5fbcc63c54c3b38e3ef88adf2da6c526313650041b0ef955763634ebd',
+  '03776b1fd8f86da3c1db3d69699e8250a15877d286734ea9a6da8e9d8ad25d16c1',
+  '03ab0e2cd7ed158687fc13b88019990860cdb72b1f5777b58513312550ea1584bc',
+  '03b9fc46657cf72a1afa007ecf431de1cd27ff5cc8829fa625b66ca47b967e6b24'
+];
+
+// Regtest ERP CSV value
+const ERP_CSV_VALUE = 500;
+
 const checkPubKeysIncludedInRedeemScript = (pubKeys, redeemScript) => {
     for (let pubKey of pubKeys) {
         expect(redeemScript.indexOf(pubKey.toString('hex'))).to.be.above(0);
@@ -176,7 +188,7 @@ describe('getFlyoverRedeemScript', () => {
     });
 });
 
-describe('getAddressFromRedeemSript', () => {
+describe('getAddressFromRedeemScript', () => {
     it('should fail for invalid data', () => {
         expect(() => redeemScriptParser.getAddressFromRedeemScript()).to.throw(ERROR_MESSAGES.INVALID_NETWORK);
         expect(() => redeemScriptParser.getAddressFromRedeemScript(NETWORKS.MAINNET)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
@@ -199,6 +211,31 @@ describe('getAddressFromRedeemSript', () => {
     });
 });
 
+describe('getP2shP2wshAddressFromRedeemScript', () => {
+    it('should fail for invalid data', () => {
+        expect(() => redeemScriptParser.getP2shP2wshAddressFromRedeemScript()).to.throw(ERROR_MESSAGES.INVALID_NETWORK);
+        expect(() => redeemScriptParser.getP2shP2wshAddressFromRedeemScript(NETWORKS.MAINNET)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.getP2shP2wshAddressFromRedeemScript(NETWORKS.MAINNET, 'not-a-buffer')).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+    });
+
+    it('should generate a valid p2sh p2wsh addreses', () => {
+        const pubKeys = [
+            '02543951140f6349680d84e51ef02d3a333b86c682018f7d02e70c0c6bf835d230', // Generated with seed: segwitFed1
+            '0375aef5f2ffd2753118b699ed75274008bc120ba07bbbd6b0307899482f664366', // Generated with seed: segwitFed2
+            '038acb7b10e27d9dab86fb1c633757ac3e34e04e8bbd69c066cad22266598238b8', // Generated with seed: segwitFed3
+            '02975acc8290a6b3a4a63799d41cc275e07235bc45df8b8cadb5e57251788c86ce', // Generated with seed: segwitFed4
+            '020aa547e2226a117cd52da9d7c8c917287990a5334e99aaf99fa079a5f4ab35d9', // Generated with seed: segwitFed5
+            '021f8ffe926a8cba95d69127dbadbe95ccd2f4c6a9dc53e7d97ca8c9450e904148', // Generated with seed: segwitFed6
+        ];
+        const expectedPowpegAddress = '2N8iMDbHivk9MJoGB2hrabau4Qcr1ZQC58h';
+        const redeemScript = redeemScriptParser.getP2shErpRedeemScript(pubKeys, ERP_PUBKEYS, ERP_CSV_VALUE);
+        const actualAddress = redeemScriptParser.getP2shP2wshAddressFromRedeemScript(
+            NETWORKS.REGTEST, 
+            redeemScript
+        );
+        expect(actualAddress).to.be.eq(expectedPowpegAddress);
+    });
+});
 
 describe('test raw RedeemScripts from file', () => {
     it('should return same redeemscript', () => {

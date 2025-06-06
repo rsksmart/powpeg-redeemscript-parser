@@ -141,10 +141,35 @@ const getAddressFromRedeemScript = (network, redeemScript) => {
     return bitcoin.address.toBase58Check(doubleHash, bitcoinjsNetworks[network].scriptHash);
 }
 
+/**
+ * 
+ * @param {NETWORKS} network 
+ * @param {Buffer} redeemScript 
+ * @returns {String}
+ */
+const getP2shP2wshAddressFromRedeemScript = (network, redeemScript) => {
+    isValidNetwork(network);
+
+    if (!Buffer.isBuffer(redeemScript)) {
+        throw new Error(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+    }
+
+    const payment = bitcoin.payments.p2sh({
+        redeem: bitcoin.payments.p2wsh({
+            redeem: { output: redeemScript },
+            network: bitcoinjsNetworks[network]
+        }),
+        network: bitcoinjsNetworks[network]
+    });
+
+    return payment.address;
+};
+
 module.exports = {
     getPowpegRedeemScript,
     getP2shErpRedeemScript,
     getFlyoverRedeemScript,
     getAddressFromRedeemScript,
+    getP2shP2wshAddressFromRedeemScript,
     NETWORKS: NETWORKS
 };
