@@ -6,17 +6,16 @@ const { NETWORKS, ERROR_MESSAGES, MAX_CSV_VALUE } = require('../constants');
 const rawRedeemScripts = require('./resources/test-redeem-scripts.json');
 const { signedNumberToHexStringLE, hexToDecimal, getRandomPubkey, numberToHexString, decimalToOpCode } = require('../utils');
 
-// Regtest ERP public keys
+// Mainnet ERP public keys
 const ERP_PUBKEYS = [
-  '029cecea902067992d52c38b28bf0bb2345bda9b21eca76b16a17c477a64e43301',
-  '03284178e5fbcc63c54c3b38e3ef88adf2da6c526313650041b0ef955763634ebd',
-  '03776b1fd8f86da3c1db3d69699e8250a15877d286734ea9a6da8e9d8ad25d16c1',
-  '03ab0e2cd7ed158687fc13b88019990860cdb72b1f5777b58513312550ea1584bc',
-  '03b9fc46657cf72a1afa007ecf431de1cd27ff5cc8829fa625b66ca47b967e6b24'
+    "0257c293086c4d4fe8943deda5f890a37d11bebd140e220faa76258a41d077b4d4",
+    "03c2660a46aa73078ee6016dee953488566426cf55fc8011edd0085634d75395f9",
+    "03cd3e383ec6e12719a6c69515e5559bcbe037d0aa24c187e1e26ce932e22ad7b3",
+    "02370a9838e4d15708ad14a104ee5606b36caaaaf739d833e67770ce9fd9b3ec80",
 ];
 
-// Regtest ERP CSV value
-const ERP_CSV_VALUE = 500;
+// Mainnet ERP CSV value
+const ERP_CSV_VALUE = 52_560;
 
 const checkPubKeysIncludedInRedeemScript = (pubKeys, redeemScript) => {
     for (let pubKey of pubKeys) {
@@ -227,7 +226,7 @@ describe('getP2shP2wshAddressFromRedeemScript', () => {
             '020aa547e2226a117cd52da9d7c8c917287990a5334e99aaf99fa079a5f4ab35d9', // Generated with seed: segwitFed5
             '021f8ffe926a8cba95d69127dbadbe95ccd2f4c6a9dc53e7d97ca8c9450e904148', // Generated with seed: segwitFed6
         ];
-        const expectedPowpegAddress = '2N8iMDbHivk9MJoGB2hrabau4Qcr1ZQC58h';
+        const expectedPowpegAddress = '2N6B6XU32Hh7G7FP1F1NF6FgQVHXZbB4NX8';
         const redeemScript = redeemScriptParser.getP2shErpRedeemScript(pubKeys, ERP_PUBKEYS, ERP_CSV_VALUE);
         const actualAddress = redeemScriptParser.getP2shP2wshAddressFromRedeemScript(
             NETWORKS.REGTEST, 
