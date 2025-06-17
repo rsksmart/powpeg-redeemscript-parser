@@ -53,4 +53,7 @@ const csvValue = 52560;
     const flyoverPowpegRedeemScript = redeemScriptParser.getFlyoverRedeemScript(powpegRedeemScript, randomFlyoverHash);
     console.log('\nFlyover powpeg redeem script:', flyoverPowpegRedeemScript.toString('hex'));
 
+    const p2shP2wshAddress = redeemScriptParser.getP2shP2wshAddressFromRedeemScript(network, p2shErpRedeemScript);
+    console.log('\nP2sh P2wsh address from erp redeem script:', p2shP2wshAddress);
+
 })();
