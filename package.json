@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bitcoinjs-lib": "^5.2.0"
+    "bitcoinjs-lib": "^6.1.7"
   },
   "devDependencies": {
     "@rsksmart/rsk-precompiled-abis": "^7.1.0-LOVELL",
