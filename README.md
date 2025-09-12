@@ -1,4 +1,4 @@
-[![CI/CD Using Github actions workflow](https://github.com/rsksmart/powpeg-redeemscript-parser/actions/workflows/workflow.yml/badge.svg)](https://github.com/rsksmart/powpeg-redeemscript-parser/actions/workflows/workflow.yml)
+[![CI/CD Using Github actions workflow](https://github.com/rsksmart/powpeg-redeemscript-parser/actions/workflows/build-test.yml/badge.svg)](https://github.com/rsksmart/powpeg-redeemscript-parser/actions/workflows/build-test.yml)
 [![CodeQL](https://github.com/rsksmart/powpeg-redeemscript-parser/workflows/CodeQL/badge.svg)](https://github.com/rsksmart/powpeg-redeemscript-parser/actions?query=workflow%3ACodeQL)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rsksmart/powpeg-redeemscript-parser/badge)](https://scorecard.dev/viewer/?uri=github.com/rsksmart/powpeg-redeemscript-parser)
 
