@@ -2,7 +2,7 @@ name: Deploy packages on NPM
 
 on:
   release:
-    types: [created, edited, published]
+    types: [published]
 
 # Declare default permissions as read only.
 permissions: read-all
@@ -64,7 +64,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af #v4.1.0
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org
 
       - name: Clean install dependencies
@@ -72,11 +72,8 @@ jobs:
           rm -rf dist
           npm ci
 
-      - name: Update npm
-        run: npm install -g npm@latest
-
-      - name: Build
-        run: npm run build
+      - name: Install npm
+        run: npm install -g npm@11.11.0
 
       - name: Pre upload validation
         id: pack
@@ -93,7 +90,7 @@ jobs:
 
           if npm view $PACKAGE_NAME@$PACKAGE_VERSION > /dev/null 2>&1; then
             echo "Version $PACKAGE_VERSION of $PACKAGE_NAME is already published."
-            exit 0
+            exit 1
           fi
 
           echo "Version $PACKAGE_VERSION of $PACKAGE_NAME is not published. Proceeding with publishing..."
@@ -129,4 +126,3 @@ jobs:
             exit 1
           fi
           echo "Hashes match successfully!"
-
