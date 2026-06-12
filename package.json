@@ -17,7 +17,7 @@
     "bitcoinjs-lib": "^5.2.0"
   },
   "devDependencies": {
-    "@rsksmart/rsk-precompiled-abis": "^7.1.0-LOVELL",
+    "@rsksmart/rsk-precompiled-abis": "^8.0.0-REED",
     "chai": "^5.2.0",
     "mocha": "^11.6.0",
     "nyc": "^17.1.0",
