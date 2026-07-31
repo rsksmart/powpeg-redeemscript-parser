@@ -38,11 +38,11 @@ const csvValue = 52560;
 
     console.log('\nPowpeg redeemscript parser data:');
 
-    const powpegRedeemScript = redeemScriptParser.getPowpegRedeemScript(powpegPublicKeys);
+    const powpegRedeemScript = redeemScriptParser.buildPowpegRedeemScriptFromPublicKeys(powpegPublicKeys);
 
     console.log('\nPowpeg redeem script:', powpegRedeemScript.toString('hex'));
 
-    const p2shErpRedeemScript = redeemScriptParser.getP2shErpRedeemScript(powpegPublicKeys, erpPubKeys, csvValue);
+    const p2shErpRedeemScript = redeemScriptParser.buildP2shErpRedeemScript(powpegPublicKeys, erpPubKeys, csvValue);
 
     console.log('\nP2sh ERP redeem script:', p2shErpRedeemScript.toString('hex'));
     console.log('\nDerived federation address:', redeemScriptParser.getAddressFromRedeemScript(network, p2shErpRedeemScript));
@@ -50,7 +50,7 @@ const csvValue = 52560;
     const randomFlyoverHash = crypto.randomBytes(32).toString('hex');
     console.log('\nRandom Flyover derivation hash:', randomFlyoverHash);
 
-    const flyoverPowpegRedeemScript = redeemScriptParser.getFlyoverRedeemScript(powpegRedeemScript, randomFlyoverHash);
+    const flyoverPowpegRedeemScript = redeemScriptParser.buildFlyoverRedeemScript(powpegRedeemScript, randomFlyoverHash);
     console.log('\nFlyover powpeg redeem script:', flyoverPowpegRedeemScript.toString('hex'));
 
     const p2shP2wshAddress = redeemScriptParser.getP2shP2wshAddressFromRedeemScript(network, p2shErpRedeemScript);
