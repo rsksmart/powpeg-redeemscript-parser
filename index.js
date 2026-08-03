@@ -30,7 +30,7 @@ const buildRedeemScriptFromBtcPublicKeys = (btcPublicKeys) => {
     const defaultPubkeys = btcPublicKeys
         .map(hex => hex instanceof Buffer ? hex: Buffer.from(hex, 'hex'))
         .sort((a, b) => a.compare(b));
-    return bitcoin.payments.p2ms({ m: parseInt(defaultPubkeys.length / 2) + 1, pubkeys: defaultPubkeys }).output;
+    return Buffer.from(bitcoin.payments.p2ms({ m: parseInt(defaultPubkeys.length / 2) + 1, pubkeys: defaultPubkeys }).output);
 };
 
 /**
@@ -144,7 +144,7 @@ const isFlyoverRedeemScript = (redeemScript) => {
 
     const [derivationHash, dropOpcode, notIfOpcode] = chunks;
     return (
-        Buffer.isBuffer(derivationHash) &&
+        derivationHash instanceof Uint8Array &&
         derivationHash.length === 32 &&
         dropOpcode === bitcoin.script.OPS.OP_DROP &&
         notIfOpcode === bitcoin.script.OPS.OP_NOTIF
