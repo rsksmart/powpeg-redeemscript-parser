@@ -1,10 +1,13 @@
+const crypto = require('crypto');
 const { NETWORKS } = require('./constants');
-const EcPair = require('bitcoinjs-lib').ECPair;
 const opcodes = require('bitcoinjs-lib').script.OPS;
 
 const numberToHexString = (number) => number.toString(16);
 const hexToDecimal = hex => parseInt(hex, 16);
-const getRandomPubkey = () => EcPair.makeRandom().publicKey.toString('hex');
+// Random 33-byte compressed pubkey (0x02/0x03 prefix + 32 random bytes). Used only by tests to
+// build redeem scripts, which don't require the key to be a valid curve point.
+const getRandomPubkey = () =>
+    Buffer.concat([Buffer.from([2 + Math.round(Math.random())]), crypto.randomBytes(32)]).toString('hex');
 
 const COUNT_OF_BITS_IN_BYTE = 8;
 const ONE_BYTE_MASK = 0xFF;

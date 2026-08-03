@@ -14,13 +14,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bitcoinjs-lib": "^5.2.0"
+    "bitcoinjs-lib": "7.0.1"
   },
   "devDependencies": {
-    "@rsksmart/rsk-precompiled-abis": "^7.1.0-LOVELL",
-    "chai": "^5.2.0",
-    "mocha": "^11.6.0",
-    "nyc": "^17.1.0",
-    "ethers": "^6.13.5"
+    "@rsksmart/rsk-precompiled-abis": "9.0.0-VETIVER",
+    "chai": "5.2.0",
+    "mocha": "11.6.0",
+    "nyc": "17.1.0",
+    "ethers": "6.13.5"
   }
 }
