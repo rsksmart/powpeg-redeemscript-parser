@@ -37,7 +37,7 @@ This method takes the parameterized powpegBtcPublicKeys, the emergency multisig 
 ### buildFlyoverRedeemScript
 
 ```ts
-function buildFlyoverRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, derivationArgsHash: string): Buffer;
+function buildFlyoverRedeemScript(powpegBtcPublicKeys: Buffer, derivationArgsHash: string): Buffer;
 ```
 
 Generates a Flyover redeemscript.
