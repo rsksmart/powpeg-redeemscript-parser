@@ -23,19 +23,6 @@ const checkPubKeysIncludedInRedeemScript = (pubKeys, redeemScript) => {
     }
 };
 
-const validateStandardRedeemScriptFormat = (redeemScript, pubKeys) => {
-    const M = parseInt(pubKeys.length / 2) + 1;
-    const N = pubKeys.length;
-
-    // First byte is M (pubKeys.length / 2 + 1)
-    expect(redeemScript.substring(0,2)).to.be.eq(numberToHexString(decimalToOpCode[M]));
-    // Second to last byte is N (pubKeys.length)
-    expect(redeemScript.slice(-4).substring(0,2)).to.be.eq(numberToHexString(decimalToOpCode[N]));
-    // Last byte is OP_CHECKMULTISIG
-    expect(redeemScript.slice(-2)).to.be.eq(numberToHexString(opcodes.OP_CHECKMULTISIG));
-    // Public keys should be in the redeem script
-    checkPubKeysIncludedInRedeemScript(pubKeys, redeemScript);
-}
 
 const validateP2shErpRedeemScriptFormat = (p2shErpRedeemScript, pubKeys, erpPubKeys, csvValue) => {
     const OP_M = decimalToOpCode[parseInt(pubKeys.length / 2) + 1];
@@ -84,28 +71,6 @@ const validateP2shErpRedeemScriptFormat = (p2shErpRedeemScript, pubKeys, erpPubK
     //  Last byte is OP_ENDIF
     expect(p2shErpRedeemScript.subarray(position, ++position).toString('hex')).to.be.eq(numberToHexString(opcodes.OP_ENDIF));
 }
-
-describe('buildPowpegRedeemScriptFromPublicKeys', () => {
-    it ('should fail for invalid data', () => {
-        expect(() => redeemScriptParser.buildPowpegRedeemScriptFromPublicKeys(null)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
-        expect(() => redeemScriptParser.buildPowpegRedeemScriptFromPublicKeys('a-string')).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
-    });
-
-    it('should return a valid redeem script', () => {
-        let pubKeys = [
-            '02cd53fc53a07f211641a677d250f6de99caf620e8e77071e811a28b3bcddf0be1',
-            '0362634ab57dae9cb373a5d536e66a8c4f67468bbcfb063809bab643072d78a124',
-            '03c5946b3fbae03a654237da863c9ed534e0878657175b132b8ca630f245df04db',
-        ];
-        let redeemScript = redeemScriptParser.buildPowpegRedeemScriptFromPublicKeys(pubKeys).toString('hex');
-        validateStandardRedeemScriptFormat(redeemScript, pubKeys);
-
-        // Sort descending
-        pubKeys = pubKeys.sort((a, b) => b.localeCompare(a));
-        let otherRedeemScript = redeemScriptParser.buildPowpegRedeemScriptFromPublicKeys(pubKeys).toString('hex');
-        expect(redeemScript).to.be.eq(otherRedeemScript);
-    });
-});
 
 describe('buildP2shErpRedeemScript', () => {
     const publicKeys = [
@@ -161,7 +126,8 @@ describe('buildP2shErpRedeemScript', () => {
 describe('buildFlyoverRedeemScript', () => {
     const dHash = crypto.randomBytes(32).toString('hex');
     const publicKeys = [getRandomPubkey(), getRandomPubkey()];
-    const redeemScript = redeemScriptParser.buildPowpegRedeemScriptFromPublicKeys(publicKeys);
+    const emergencyPublicKeys = [getRandomPubkey(), getRandomPubkey()];
+    const redeemScript = redeemScriptParser.buildP2shErpRedeemScript(publicKeys, emergencyPublicKeys, 100);
 
     it('should fail for invalid data', () => {
         // fail because there is no redeem script
@@ -184,29 +150,6 @@ describe('buildFlyoverRedeemScript', () => {
         let flyoverRedeemScript = redeemScriptParser.buildFlyoverRedeemScript(redeemScript, dHash).toString('hex');
         checkPubKeysIncludedInRedeemScript(publicKeys, flyoverRedeemScript);
         expect(flyoverRedeemScript.indexOf(dHash)).to.be.above(0);
-    });
-});
-
-describe('getAddressFromRedeemScript', () => {
-    it('should fail for invalid data', () => {
-        expect(() => redeemScriptParser.getAddressFromRedeemScript()).to.throw(ERROR_MESSAGES.INVALID_NETWORK);
-        expect(() => redeemScriptParser.getAddressFromRedeemScript(NETWORKS.MAINNET)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
-        expect(() => redeemScriptParser.getAddressFromRedeemScript(NETWORKS.MAINNET, 'not-a-buffer')).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
-    });
-
-    it('should generate a valid addreses', () => {
-        // This is the regtest genesis powpeg address
-        const pubKeys = [
-            '02cd53fc53a07f211641a677d250f6de99caf620e8e77071e811a28b3bcddf0be1',
-            '0362634ab57dae9cb373a5d536e66a8c4f67468bbcfb063809bab643072d78a124',
-            '03c5946b3fbae03a654237da863c9ed534e0878657175b132b8ca630f245df04db',
-        ];
-        const expectedPowpegAddress = '2N5muMepJizJE1gR7FbHJU6CD18V3BpNF9p';
-        let redeemScript = redeemScriptParser.buildPowpegRedeemScriptFromPublicKeys(pubKeys);
-        expect(redeemScriptParser.getAddressFromRedeemScript(
-            NETWORKS.REGTEST, 
-            redeemScript
-        )).to.be.eq(expectedPowpegAddress);
     });
 });
 
