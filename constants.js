@@ -11,7 +11,7 @@ const ERROR_MESSAGES = {
     INVALID_DHASH: 'derivationArgsHash must be hash represented as a 64 characters string',
     INVALID_POWPEG_REDEEM_SCRIPT: 'powpegRedeemScript must be a Buffer',
     INVALID_REDEEM_SCRIPT: 'redeemScript must be a Buffer',
-    INVALID_WITNESS: 'witness must be a Buffer',
+    INVALID_WITNESS: 'witness must be a non-empty array',
     NOT_A_FLYOVER_REDEEM_SCRIPT: 'redeemScript is not a flyover redeem script',
     INVALID_NETWORK: 'Network undefined'
 }

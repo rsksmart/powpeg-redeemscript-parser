@@ -101,7 +101,7 @@ describe('buildPowpegRedeemScriptFromPublicKeys', () => {
         validateStandardRedeemScriptFormat(redeemScript, pubKeys);
 
         // Sort descending
-        pubKeys = pubKeys.sort((a, b) => b > a);
+        pubKeys = pubKeys.sort((a, b) => b.localeCompare(a));
         let otherRedeemScript = redeemScriptParser.buildPowpegRedeemScriptFromPublicKeys(pubKeys).toString('hex');
         expect(redeemScript).to.be.eq(otherRedeemScript);
     });
@@ -127,9 +127,9 @@ describe('buildP2shErpRedeemScript', () => {
         expect(() => redeemScriptParser.buildP2shErpRedeemScript(null, null, null)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
 
         // fail because there are no erp public keys
-        expect(() => redeemScriptParser.buildP2shErpRedeemScript(publicKeys, null, null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
-        expect(() => redeemScriptParser.buildP2shErpRedeemScript(publicKeys, '', null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
-        expect(() => redeemScriptParser.buildP2shErpRedeemScript(publicKeys, getRandomPubkey(), null)).to.throw(ERROR_MESSAGES.INVALID_ERP_PUBLIC_KEYS);
+        expect(() => redeemScriptParser.buildP2shErpRedeemScript(publicKeys, null, null)).to.throw(ERROR_MESSAGES.INVALID_EMERGENCY_PUBLIC_KEYS);
+        expect(() => redeemScriptParser.buildP2shErpRedeemScript(publicKeys, '', null)).to.throw(ERROR_MESSAGES.INVALID_EMERGENCY_PUBLIC_KEYS);
+        expect(() => redeemScriptParser.buildP2shErpRedeemScript(publicKeys, getRandomPubkey(), null)).to.throw(ERROR_MESSAGES.INVALID_EMERGENCY_PUBLIC_KEYS);
 
         // fail because there is no csv value
         expect(() => redeemScriptParser.buildP2shErpRedeemScript(publicKeys, emergencyBtcPublicKeys, null)).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
@@ -237,6 +237,10 @@ describe('getP2shP2wshAddressFromRedeemScript', () => {
 });
 
 describe('getP2shP2wshScriptHashFromRedeemScript', () => {
+    it('should fail for a non-Buffer redeem script', () => {
+        expect(() => redeemScriptParser.getP2shP2wshScriptHashFromRedeemScript('not-a-buffer')).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+    });
+
     it('should generate the p2sh p2wsh script hash embedded in the p2sh p2wsh address', () => {
         const pubKeys = [
             '02543951140f6349680d84e51ef02d3a333b86c682018f7d02e70c0c6bf835d230', // Generated with seed: segwitFed1

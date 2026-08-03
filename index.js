@@ -45,7 +45,7 @@ const buildP2shErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValu
         throw new Error(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
     }
     if (!Array.isArray(erpBtcPublicKeys)) {
-        throw new Error(ERROR_MESSAGES.INVALID_P2SH_ERP_PUBLIC_KEYS);
+        throw new Error(ERROR_MESSAGES.INVALID_EMERGENCY_PUBLIC_KEYS);
     }
 
     if (!Number.isInteger(csvValue) || csvValue < 1 || csvValue > MAX_CSV_VALUE) {
@@ -206,6 +206,9 @@ const getP2shP2wshAddressFromRedeemScript = (network, redeemScript) => {
 };
 
 function getP2shP2wshScriptHashFromRedeemScript(redeemScript) {
+    if (!Buffer.isBuffer(redeemScript)) {
+        throw new Error(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+    }
     const witnessProgram = Buffer.concat([Buffer.from('0020', 'hex'), bitcoin.crypto.sha256(redeemScript)]);
     return Buffer.from(bitcoin.crypto.hash160(witnessProgram)).toString('hex');
 }
