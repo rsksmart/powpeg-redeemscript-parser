@@ -16,15 +16,6 @@ Run `node sample/sample.js` to get a full run of all the methods available in th
 
 The library offers methods to calculate each type of redeemscript available for the RSK powpeg. It also has a method to, given a redeemscript, get the powpeg address.
 
-### buildPowpegRedeemScriptFromPublicKeys
-
-```ts
-function buildPowpegRedeemScriptFromPublicKeys(powpegBtcPublicKeys: Array<string|Buffer>): Buffer;
-```
-
-Generates a regular powpeg redeemscript.
-This methods takes the parameterized powpegBtcPublicKeys, sorts them ascending and generates a p2ms script. The signature threshold is half public keys plus one.
-
 ### buildP2shErpRedeemScript
 
 ```ts
@@ -43,18 +34,10 @@ function buildFlyoverRedeemScript(powpegBtcPublicKeys: Buffer, derivationArgsHas
 Generates a Flyover redeemscript.
 This method expects a derivation arguments hash that represents the flyover protocol operation. With this it generates a prefix that is then joined with the regular powpeg redeemscript.
 
-### getAddressFromRedeemScript
-
-```ts
-function getAddressFromRedeemScript(network: NETWORKS, redeemScript: Buffer): string;
-```
-
-Generates a base58 address for the P2SH calculated from the provided redeemscript. The network is used to set the network prefix of the address.
-
 ### getP2shP2wshAddressFromRedeemScript
 
 ```ts
-function getAddressFromRedeemScript(network: NETWORKS, redeemScript: Buffer): string;
+function getP2shP2wshAddressFromRedeemScript(network: NETWORKS, redeemScript: Buffer): string;
 ```
 
 Generates a base58 address for the P2SH P2WSH calculated from the provided redeemscript. The network is used to set the network prefix of the address.

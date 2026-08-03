@@ -10,18 +10,6 @@ bitcoinjsNetworks[NETWORKS.REGTEST] = bitcoin.networks.regtest;
 
 /**
  * 
- * @param {String[] | Buffer[]} powpegBtcPublicKeys 
- * @returns {Buffer}
- */
-const buildPowpegRedeemScriptFromPublicKeys = (powpegBtcPublicKeys) => {
-    if (!Array.isArray(powpegBtcPublicKeys)) {
-        throw new Error(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
-    }
-    return buildRedeemScriptFromBtcPublicKeys(powpegBtcPublicKeys);
-};
-
-/**
- * 
  * @param {String[] | Buffer[]} btcPublicKeys 
  * @returns {Buffer}
  */
@@ -165,23 +153,6 @@ const removeFlyoverPrefix = (redeemScript) => {
 };
 
 /**
- *
- * @param {NETWORKS} network
- * @param {Buffer} redeemScript
- * @returns {String}
- */
-const getP2shAddressFromRedeemScript = (network, redeemScript) => {
-    isValidNetwork(network);
-
-    if (!Buffer.isBuffer(redeemScript)) {
-        throw new Error(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
-    }
-
-    const doubleHash = bitcoin.crypto.ripemd160(bitcoin.crypto.sha256(redeemScript));
-    return bitcoin.address.toBase58Check(doubleHash, bitcoinjsNetworks[network].scriptHash);
-};
-
-/**
  * 
  * @param {NETWORKS} network 
  * @param {Buffer} redeemScript 
@@ -226,12 +197,10 @@ function getRedeemScriptFromWitness(witness) {
 }
 
 module.exports = {
-    buildPowpegRedeemScriptFromPublicKeys,
     buildP2shErpRedeemScript,
     buildFlyoverRedeemScript,
     isFlyoverRedeemScript,
     removeFlyoverPrefix,
-    getAddressFromRedeemScript: getP2shAddressFromRedeemScript,
     getP2shP2wshAddressFromRedeemScript,
     getP2shP2wshScriptHashFromRedeemScript,
     getScriptHashFromAddress,

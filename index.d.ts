@@ -6,13 +6,7 @@ export enum NETWORKS {
 }
 
 /**
- * Sorts public keys and creates powpeg redeem script
- * @param powpegBtcPublicKeys Array of pegnatories public keys to get redeemScript
- */
-export function buildPowpegRedeemScriptFromPublicKeys(powpegBtcPublicKeys: Array<string|Buffer>): Buffer;
-
-/**
- * generates custom ERP redeemscript, also uses buildPowpegRedeemScriptFromPublicKeys to generate base redeemScript
+ * generates custom ERP redeemscript from the powpeg and emergency public keys
  * @param powpegBtcPublicKeys Array of pegnatories public keys to get redeemScript
  * @param emergencyBtcPublicKeys Array of emergency multisig public keys to get redeemScript
  * @param csvValue CSV value in number format get redeemScript
@@ -38,13 +32,6 @@ export function buildP2shErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffe
   * @param redeemScript a flyover redeem script
   */
  export function removeFlyoverPrefix(redeemScript: Buffer): Buffer;
-
- /**
-  * generates a p2sh BTC address for the parameterized network using the parameterized redeemscript
-  * @param network network is used to select the proper ERP constants
-  * @param redeemScript a calculated redeemscript
-  */
- export function getAddressFromRedeemScript(network: NETWORKS, redeemScript: Buffer): string;
 
  /**
   * generates a p2sh p2wsh BTC address for the parameterized network using the parameterized redeemscript
