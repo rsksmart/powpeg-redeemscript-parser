@@ -34,22 +34,16 @@ const csvValue = 52560;
 
     console.log('\nCurrent federation address:', currentFederationAddress);
 
-    const network = redeemScriptParser.NETWORKS.MAINNET;
-
     console.log('\nPowpeg redeemscript parser data:');
 
-    const p2shErpRedeemScript = redeemScriptParser.buildP2shErpRedeemScript(powpegPublicKeys, erpPubKeys, csvValue);
+    const powpegRedeemScript = redeemScriptParser.buildPowpegRedeemScript(powpegPublicKeys, erpPubKeys, csvValue);
 
-    console.log('\nP2sh ERP redeem script:', p2shErpRedeemScript.toString('hex'));
-    console.log('\nDerived federation address:', redeemScriptParser.getP2shP2wshAddressFromRedeemScript(network, p2shErpRedeemScript));
+    console.log('\nPowpeg redeem script:', powpegRedeemScript.toString('hex'));
 
     const randomFlyoverHash = crypto.randomBytes(32).toString('hex');
     console.log('\nRandom Flyover derivation hash:', randomFlyoverHash);
 
-    const flyoverPowpegRedeemScript = redeemScriptParser.buildFlyoverRedeemScript(p2shErpRedeemScript, randomFlyoverHash);
+    const flyoverPowpegRedeemScript = redeemScriptParser.buildFlyoverRedeemScript(powpegRedeemScript, randomFlyoverHash);
     console.log('\nFlyover powpeg redeem script:', flyoverPowpegRedeemScript.toString('hex'));
-
-    const p2shP2wshAddress = redeemScriptParser.getP2shP2wshAddressFromRedeemScript(network, p2shErpRedeemScript);
-    console.log('\nP2sh P2wsh address from erp redeem script:', p2shP2wshAddress);
 
 })();

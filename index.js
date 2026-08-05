@@ -1,19 +1,13 @@
 const bitcoin = require('bitcoinjs-lib');
-const { NETWORKS, ERROR_MESSAGES, MAX_CSV_VALUE } = require('./constants');
-const { numberToHexString, isValidNetwork, signedNumberToHexStringLE } = require('./utils');
-
-const bitcoinjsNetworks = {};
-
-bitcoinjsNetworks[NETWORKS.MAINNET] = bitcoin.networks.bitcoin;
-bitcoinjsNetworks[NETWORKS.TESTNET] = bitcoin.networks.testnet;
-bitcoinjsNetworks[NETWORKS.REGTEST] = bitcoin.networks.regtest;
+const { ERROR_MESSAGES, MAX_CSV_VALUE } = require('./constants');
+const { numberToHexString, signedNumberToHexStringLE } = require('./utils');
 
 /**
  * 
  * @param {String[] | Buffer[]} btcPublicKeys 
  * @returns {Buffer}
  */
-const buildRedeemScriptFromBtcPublicKeys = (btcPublicKeys) => {
+const buildStandardMultiSigRedeemScript = (btcPublicKeys) => {
     // Parse to Buffer and sort keys
     const defaultPubkeys = btcPublicKeys
         .map(hex => hex instanceof Buffer ? hex: Buffer.from(hex, 'hex'))
@@ -28,7 +22,7 @@ const buildRedeemScriptFromBtcPublicKeys = (btcPublicKeys) => {
  * @param {Number} csvValue 
  * @returns {Buffer}
  */
-const buildP2shErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue) => {
+const buildPowpegRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue) => {
     if (!Array.isArray(powpegBtcPublicKeys)) {
         throw new Error(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
     }
@@ -42,8 +36,8 @@ const buildP2shErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValu
 
     const csvLEHexValue = signedNumberToHexStringLE(csvValue);
 
-    const defaultRedeemScript = buildRedeemScriptFromBtcPublicKeys(powpegBtcPublicKeys).toString('hex');
-    const emergencyRedeemScript = buildRedeemScriptFromBtcPublicKeys(erpBtcPublicKeys).toString('hex');
+    const defaultRedeemScript = buildStandardMultiSigRedeemScript(powpegBtcPublicKeys).toString('hex');
+    const emergencyRedeemScript = buildStandardMultiSigRedeemScript(erpBtcPublicKeys).toString('hex');
 
     const bufferLength = parseInt(
         1 + 
@@ -130,12 +124,11 @@ const isFlyoverRedeemScript = (redeemScript) => {
         return false;
     }
 
-    const [derivationHash, dropOpcode, notIfOpcode] = chunks;
+    const [derivationHash, dropOpcode] = chunks;
     return (
         derivationHash instanceof Uint8Array &&
         derivationHash.length === 32 &&
-        dropOpcode === bitcoin.script.OPS.OP_DROP &&
-        notIfOpcode === bitcoin.script.OPS.OP_NOTIF
+        dropOpcode === bitcoin.script.OPS.OP_DROP
     );
 };
 
@@ -152,58 +145,9 @@ const removeFlyoverPrefix = (redeemScript) => {
     return redeemScript.slice(FLYOVER_PREFIX_LENGTH_IN_BYTES);
 };
 
-/**
- * 
- * @param {NETWORKS} network 
- * @param {Buffer} redeemScript 
- * @returns {String}
- */
-const getP2shP2wshAddressFromRedeemScript = (network, redeemScript) => {
-    isValidNetwork(network);
-
-    if (!Buffer.isBuffer(redeemScript)) {
-        throw new Error(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
-    }
-
-    const payment = bitcoin.payments.p2sh({
-        redeem: bitcoin.payments.p2wsh({
-            redeem: { output: redeemScript },
-            network: bitcoinjsNetworks[network]
-        }),
-        network: bitcoinjsNetworks[network]
-    });
-
-    return payment.address;
-};
-
-function getP2shP2wshScriptHashFromRedeemScript(redeemScript) {
-    if (!Buffer.isBuffer(redeemScript)) {
-        throw new Error(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
-    }
-    const witnessProgram = Buffer.concat([Buffer.from('0020', 'hex'), bitcoin.crypto.sha256(redeemScript)]);
-    return Buffer.from(bitcoin.crypto.hash160(witnessProgram)).toString('hex');
-}
-
-function getScriptHashFromAddress(address) {
-    return Buffer.from(bitcoin.address.fromBase58Check(address).hash).toString('hex');
-}
-
-function getRedeemScriptFromWitness(witness) {
-    if (!Array.isArray(witness) || witness.length === 0) {
-        throw new Error(ERROR_MESSAGES.INVALID_WITNESS);
-    }
-
-    return Buffer.from(witness[witness.length - 1], 'hex');
-}
-
 module.exports = {
-    buildP2shErpRedeemScript,
+    buildPowpegRedeemScript,
     buildFlyoverRedeemScript,
     isFlyoverRedeemScript,
-    removeFlyoverPrefix,
-    getP2shP2wshAddressFromRedeemScript,
-    getP2shP2wshScriptHashFromRedeemScript,
-    getScriptHashFromAddress,
-    getRedeemScriptFromWitness,
-    NETWORKS
+    removeFlyoverPrefix
 };
