@@ -1,13 +1,7 @@
-const crypto = require('crypto');
-const { NETWORKS } = require('./constants');
 const opcodes = require('bitcoinjs-lib').script.OPS;
 
 const numberToHexString = (number) => number.toString(16);
 const hexToDecimal = hex => parseInt(hex, 16);
-// Random 33-byte compressed pubkey (0x02/0x03 prefix + 32 random bytes). Used only by tests to
-// build redeem scripts, which don't require the key to be a valid curve point.
-const getRandomPubkey = () =>
-    Buffer.concat([Buffer.from([2 + Math.round(Math.random())]), crypto.randomBytes(32)]).toString('hex');
 
 const COUNT_OF_BITS_IN_BYTE = 8;
 const ONE_BYTE_MASK = 0xFF;
@@ -31,13 +25,6 @@ const decimalToOpCode = {
     15: opcodes.OP_15,
     16: opcodes.OP_16
 }
-
-const isValidNetwork = (network) => {
-    if (!NETWORKS[network]) {
-        throw new Error(`Network ${network} is not valid value (valid values are: ${Object.keys(NETWORKS)})`);
-    }
-    return true;
-};
 
 /**
  *
@@ -75,8 +62,6 @@ const isValidNetwork = (network) => {
 module.exports = {
     numberToHexString,
     hexToDecimal,
-    getRandomPubkey,
     decimalToOpCode,
-    isValidNetwork,
     signedNumberToHexStringLE
 }

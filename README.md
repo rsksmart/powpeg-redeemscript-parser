@@ -16,47 +16,23 @@ Run `node sample/sample.js` to get a full run of all the methods available in th
 
 The library offers methods to calculate each type of redeemscript available for the RSK powpeg. It also has a method to, given a redeemscript, get the powpeg address.
 
-### buildP2shErpRedeemScript
+### buildPowpegRedeemScript
 
 ```ts
-function buildP2shErpRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, emergencyBtcPublicKeys: Array<string|Buffer>, csvValue: number): Buffer;
+function buildPowpegRedeemScript(powpegBtcPublicKeys: Array<string|Buffer>, emergencyBtcPublicKeys: Array<string|Buffer>, csvValue: number): Buffer;
 ```
 
-Generates a P2SH ERP powpeg redeemscript. (this will become the default after the first powpeg changes after HOP 4.0.1)
-This method takes the parameterized powpegBtcPublicKeys, the emergency multisig public keys, and the delay value to generate the P2SH ERP redeemscript.
+Generates the powpeg (P2SH-P2WSH ERP) redeemscript.
+This method takes the parameterized powpegBtcPublicKeys, the emergency multisig public keys, and the delay value to generate the redeemscript.
 
 ### buildFlyoverRedeemScript
 
 ```ts
-function buildFlyoverRedeemScript(powpegBtcPublicKeys: Buffer, derivationArgsHash: string): Buffer;
+function buildFlyoverRedeemScript(powpegRedeemScript: Buffer, derivationArgsHash: string): Buffer;
 ```
 
 Generates a Flyover redeemscript.
 This method expects a derivation arguments hash that represents the flyover protocol operation. With this it generates a prefix that is then joined with the regular powpeg redeemscript.
-
-### getP2shP2wshAddressFromRedeemScript
-
-```ts
-function getP2shP2wshAddressFromRedeemScript(network: NETWORKS, redeemScript: Buffer): string;
-```
-
-Generates a base58 address for the P2SH P2WSH calculated from the provided redeemscript. The network is used to set the network prefix of the address.
-
-### getP2shP2wshScriptHashFromRedeemScript
-
-```ts
-function getP2shP2wshScriptHashFromRedeemScript(redeemScript: Buffer): string;
-```
-
-Returns the hex-encoded P2SH-P2WSH script hash (`hash160(OP_0 <sha256(redeemScript)>)`) for the provided redeemscript. This is the 20-byte hash embedded in the P2SH-P2WSH address, so it is network agnostic.
-
-### getScriptHashFromAddress
-
-```ts
-function getScriptHashFromAddress(address: string): string;
-```
-
-Returns the hex-encoded script hash embedded in a base58check address (e.g. the P2SH script hash of a powpeg address). Useful for comparing a derived script hash against a federation address without deriving a network-prefixed address.
 
 ### isFlyoverRedeemScript
 
@@ -73,13 +49,5 @@ function removeFlyoverPrefix(redeemScript: Buffer): Buffer;
 ```
 
 Removes the flyover prefix from a flyover redeemscript, returning the underlying powpeg redeemscript. Throws if the redeemscript is not a flyover redeemscript.
-
-### getRedeemScriptFromWitness
-
-```ts
-function getRedeemScriptFromWitness(witness: string[]): Buffer;
-```
-
-Extracts the redeemscript (the last item of the witness stack) from a transaction input's witness.
 
 For any comments or suggestions, feel free to contribute or reach out at our [Discord server](https://discord.gg/rootstock).
