@@ -3,7 +3,6 @@ const ERROR_MESSAGES = {
     INVALID_EMERGENCY_PUBLIC_KEYS: 'emergencyBtcPublicKeys should be an array',
     INVALID_CSV_VALUE: 'csvValue is required in the number format and should be between 1 and 65535',
     INVALID_DHASH: 'derivationArgsHash must be hash represented as a 64 characters string',
-    INVALID_POWPEG_REDEEM_SCRIPT: 'powpegRedeemScript must be a Buffer',
     INVALID_REDEEM_SCRIPT: 'redeemScript must be a Buffer',
     NOT_A_FLYOVER_REDEEM_SCRIPT: 'redeemScript is not a flyover redeem script'
 }

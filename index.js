@@ -96,7 +96,7 @@ const buildFlyoverPrefix = (derivationArgsHash) => {
  */
 const buildFlyoverRedeemScript = (powpegRedeemScript, derivationArgsHash) => {
     if (!Buffer.isBuffer(powpegRedeemScript)) {
-        throw new Error(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
+        throw new Error(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
     }
     
     return Buffer.concat([

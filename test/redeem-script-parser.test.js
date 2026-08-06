@@ -125,11 +125,11 @@ describe('buildFlyoverRedeemScript', () => {
 
     it('should fail for invalid data', () => {
         // fail because there is no redeem script
-        expect(() => redeemScriptParser.buildFlyoverRedeemScript(null)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
-        expect(() => redeemScriptParser.buildFlyoverRedeemScript(null, null)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
-        expect(() => redeemScriptParser.buildFlyoverRedeemScript(null, DERIVATION_HASH)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
-        expect(() => redeemScriptParser.buildFlyoverRedeemScript('', DERIVATION_HASH)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
-        expect(() => redeemScriptParser.buildFlyoverRedeemScript('not-a-buffer', DERIVATION_HASH)).to.throw(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.buildFlyoverRedeemScript(null)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.buildFlyoverRedeemScript(null, null)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.buildFlyoverRedeemScript(null, DERIVATION_HASH)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.buildFlyoverRedeemScript('', DERIVATION_HASH)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+        expect(() => redeemScriptParser.buildFlyoverRedeemScript('not-a-buffer', DERIVATION_HASH)).to.throw(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
 
         // fail because there is no derivation hash
         expect(() => redeemScriptParser.buildFlyoverRedeemScript(redeemScript, null)).to.throw(ERROR_MESSAGES.INVALID_DHASH);
