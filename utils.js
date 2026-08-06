@@ -1,10 +1,7 @@
-const { NETWORKS } = require('./constants');
-const EcPair = require('bitcoinjs-lib').ECPair;
 const opcodes = require('bitcoinjs-lib').script.OPS;
 
 const numberToHexString = (number) => number.toString(16);
 const hexToDecimal = hex => parseInt(hex, 16);
-const getRandomPubkey = () => EcPair.makeRandom().publicKey.toString('hex');
 
 const COUNT_OF_BITS_IN_BYTE = 8;
 const ONE_BYTE_MASK = 0xFF;
@@ -28,13 +25,6 @@ const decimalToOpCode = {
     15: opcodes.OP_15,
     16: opcodes.OP_16
 }
-
-const isValidNetwork = (network) => {
-    if (!NETWORKS[network]) {
-        throw new Error(`Network ${network} is not valid value (valid values are: ${Object.keys(NETWORKS)})`);
-    }
-    return true;
-};
 
 /**
  *
@@ -72,8 +62,6 @@ const isValidNetwork = (network) => {
 module.exports = {
     numberToHexString,
     hexToDecimal,
-    getRandomPubkey,
     decimalToOpCode,
-    isValidNetwork,
     signedNumberToHexStringLE
 }

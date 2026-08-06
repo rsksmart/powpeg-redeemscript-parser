@@ -1,6 +1,6 @@
 {
   "name": "@rsksmart/powpeg-redeemscript-parser",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "This library helps obtaining the redeem script of the RSK powpeg as well as generating its address.",
   "main": "index.js",
   "scripts": {
@@ -13,14 +13,17 @@
   },
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "dependencies": {
-    "bitcoinjs-lib": "^5.2.0"
+    "bitcoinjs-lib": "7.0.1"
   },
   "devDependencies": {
-    "@rsksmart/rsk-precompiled-abis": "^7.1.0-LOVELL",
-    "chai": "^5.2.0",
-    "mocha": "^11.6.0",
-    "nyc": "^17.1.0",
-    "ethers": "^6.13.5"
+    "@rsksmart/rsk-precompiled-abis": "9.0.0-VETIVER",
+    "chai": "5.2.0",
+    "mocha": "11.6.0",
+    "nyc": "17.1.0",
+    "ethers": "6.13.5"
   }
 }
