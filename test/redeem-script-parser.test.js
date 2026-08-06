@@ -9,6 +9,14 @@ const { OPS: opcodes, signedNumberToHexStringLE, hexToDecimal, numberToHexString
 // Only handles direct pushes (buffers under 76 bytes), which is all these tests need.
 const pushBuffer = (buffer) => Buffer.concat([Buffer.from([buffer.length]), buffer]);
 
+// Deterministic compressed-pubkey-shaped (33-byte) hex strings, for exercising the
+// 1-16 public key count boundary. buildStandardMultiSigRedeemScript only checks
+// count and length here, not whether they're real EC points.
+const dummyPubKeys = (count) => Array.from(
+    { length: count },
+    (_, i) => Buffer.concat([Buffer.from([0x02]), Buffer.alloc(32, i + 1)]).toString('hex')
+);
+
 // Deterministic powpeg public keys (generated with seeds segwitFed1..3)
 const POWPEG_PUBLIC_KEYS = [
     '02543951140f6349680d84e51ef02d3a333b86c682018f7d02e70c0c6bf835d230',
@@ -110,6 +118,24 @@ describe('buildPowpegRedeemScript', () => {
         expect(() => redeemScriptParser.buildPowpegRedeemScript(POWPEG_PUBLIC_KEYS, ERP_PUBKEYS, ERP_CSV_VALUE - 0.5)).to.throw(ERROR_MESSAGES.INVALID_CSV_VALUE);
     });
 
+    it('fails for an invalid public key count', () => {
+        // fails because there are no powpeg public keys
+        expect(() => redeemScriptParser.buildPowpegRedeemScript([], ERP_PUBKEYS, ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
+        // fails because there are too many powpeg public keys
+        expect(() => redeemScriptParser.buildPowpegRedeemScript(dummyPubKeys(17), ERP_PUBKEYS, ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
+        // fails because there are no erp public keys
+        expect(() => redeemScriptParser.buildPowpegRedeemScript(POWPEG_PUBLIC_KEYS, [], ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
+        // fails because there are too many erp public keys
+        expect(() => redeemScriptParser.buildPowpegRedeemScript(POWPEG_PUBLIC_KEYS, dummyPubKeys(17), ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
+    });
+
+    it('should return a valid redeem script at the 16 public key boundary', () => {
+        const powpegKeys = dummyPubKeys(16);
+        const erpKeys = dummyPubKeys(16);
+        const redeemScript = redeemScriptParser.buildPowpegRedeemScript(powpegKeys, erpKeys, ERP_CSV_VALUE);
+        validateRedeemScriptFormat(redeemScript, powpegKeys, erpKeys, ERP_CSV_VALUE);
+    });
+
     it('should return a valid powpeg redeem script', () => {
         const redeemScript = redeemScriptParser.buildPowpegRedeemScript(POWPEG_PUBLIC_KEYS, ERP_PUBKEYS, ERP_CSV_VALUE);
         validateRedeemScriptFormat(redeemScript, POWPEG_PUBLIC_KEYS, ERP_PUBKEYS, ERP_CSV_VALUE);
@@ -193,8 +219,8 @@ describe('flyover redeem scripts', () => {
             // too short to even contain the 34-byte prefix
             expect(redeemScriptParser.isFlyoverRedeemScript(Buffer.from('4c', 'hex'))).to.be.false;
             expect(redeemScriptParser.isFlyoverRedeemScript(Buffer.from('51', 'hex'))).to.be.false;
-            // first push is not 32 bytes
-            expect(redeemScriptParser.isFlyoverRedeemScript(Buffer.concat([pushBuffer(Buffer.alloc(20)), Buffer.from([opcodes.OP_DROP, opcodes.OP_NOTIF])]))).to.be.false;
+            // long enough, but the first push is not 32 bytes (33, not 32)
+            expect(redeemScriptParser.isFlyoverRedeemScript(Buffer.concat([pushBuffer(Buffer.alloc(33)), Buffer.from([opcodes.OP_DROP, opcodes.OP_NOTIF])]))).to.be.false;
             // 32-byte first push, long enough, but the second chunk is not OP_DROP
             expect(redeemScriptParser.isFlyoverRedeemScript(Buffer.concat([pushBuffer(Buffer.alloc(32)), Buffer.from([opcodes.OP_NOTIF, opcodes.OP_NOTIF])]))).to.be.false;
         });
