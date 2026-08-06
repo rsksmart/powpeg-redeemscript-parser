@@ -1,18 +1,26 @@
-const bitcoin = require('bitcoinjs-lib');
 const { ERROR_MESSAGES, MAX_CSV_VALUE } = require('./constants');
-const { numberToHexString, signedNumberToHexStringLE } = require('./utils');
+const { OPS, numberToHexString, decimalToOpCode, signedNumberToHexStringLE } = require('./utils');
 
 /**
- * 
- * @param {String[] | Buffer[]} btcPublicKeys 
+ *
+ * @param {String[] | Buffer[]} btcPublicKeys
  * @returns {Buffer}
  */
 const buildStandardMultiSigRedeemScript = (btcPublicKeys) => {
     // Parse to Buffer and sort keys
-    const defaultPubkeys = btcPublicKeys
+    const pubkeys = btcPublicKeys
         .map(hex => hex instanceof Buffer ? hex: Buffer.from(hex, 'hex'))
         .sort((a, b) => a.compare(b));
-    return Buffer.from(bitcoin.payments.p2ms({ m: parseInt(defaultPubkeys.length / 2) + 1, pubkeys: defaultPubkeys }).output);
+
+    const m = decimalToOpCode[parseInt(pubkeys.length / 2) + 1];
+    const n = decimalToOpCode[pubkeys.length];
+
+    // OP_M <pushbyte(pubkey)>... OP_N OP_CHECKMULTISIG
+    return Buffer.concat([
+        Buffer.from([m]),
+        ...pubkeys.map(pubkey => Buffer.concat([Buffer.from([pubkey.length]), pubkey])),
+        Buffer.from([n, OPS.OP_CHECKMULTISIG])
+    ]);
 };
 
 /**
@@ -51,22 +59,22 @@ const buildPowpegRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue
 
     const redeemScript = Buffer.alloc(bufferLength);
 
-    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_NOTIF), 'hex');
+    redeemScript.write(numberToHexString(OPS.OP_NOTIF), 'hex');
     redeemScript.write(defaultRedeemScript, 1, 'hex');
     let position = 1 + parseInt(defaultRedeemScript.length / 2);
-    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ELSE), position, 'hex');
+    redeemScript.write(numberToHexString(OPS.OP_ELSE), position, 'hex');
     position+= 1;
     redeemScript.write(`0${csvLEHexValue.length / 2}`, position, 'hex'); // OP_PUSHBYTES
     position+= 1;
     redeemScript.write(csvLEHexValue, position, 'hex');
     position+= csvLEHexValue.length / 2;
-    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_CHECKSEQUENCEVERIFY), position, 'hex');
+    redeemScript.write(numberToHexString(OPS.OP_CHECKSEQUENCEVERIFY), position, 'hex');
     position+= 1;
-    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_DROP), position, 'hex');
+    redeemScript.write(numberToHexString(OPS.OP_DROP), position, 'hex');
     position+= 1;
     redeemScript.write(emergencyRedeemScript, position, 'hex');
     position+= emergencyRedeemScript.length / 2;
-    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ENDIF), position, 'hex');
+    redeemScript.write(numberToHexString(OPS.OP_ENDIF), position, 'hex');
 
     return Buffer.from(redeemScript, 'hex');
 };
@@ -83,7 +91,7 @@ const buildFlyoverPrefix = (derivationArgsHash) => {
     const prefix = Buffer.alloc(34);
     prefix.write('20', 'hex'); // hash length
     prefix.write(derivationArgsHash, 1, 'hex');
-    prefix.write(numberToHexString(bitcoin.script.OPS.OP_DROP), prefix.length - 1, 'hex'); // DROP the hash
+    prefix.write(numberToHexString(OPS.OP_DROP), prefix.length - 1, 'hex'); // DROP the hash
 
     return prefix;
 };
@@ -107,6 +115,7 @@ const buildFlyoverRedeemScript = (powpegRedeemScript, derivationArgsHash) => {
 
 // Flyover prefix: OP_PUSHBYTES_32 (1) + 32-byte derivation hash + OP_DROP (1)
 const FLYOVER_PREFIX_LENGTH_IN_BYTES = 34;
+const OP_PUSHBYTES_32 = 0x20;
 
 /**
  * Checks whether a redeem script is a flyover redeem script, i.e. a powpeg redeem script prefixed
@@ -119,16 +128,12 @@ const isFlyoverRedeemScript = (redeemScript) => {
         throw new Error(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
     }
 
-    const chunks = bitcoin.script.decompile(redeemScript);
-    if (!chunks || chunks.length < 3) {
-        return false;
-    }
-
-    const [derivationHash, dropOpcode] = chunks;
+    // Must have at least one more byte after the prefix - a bare
+    // "<hash> OP_DROP" with nothing left to guard is not a flyover script.
     return (
-        derivationHash instanceof Uint8Array &&
-        derivationHash.length === 32 &&
-        dropOpcode === bitcoin.script.OPS.OP_DROP
+        redeemScript.length > FLYOVER_PREFIX_LENGTH_IN_BYTES &&
+        redeemScript[0] === OP_PUSHBYTES_32 &&
+        redeemScript[FLYOVER_PREFIX_LENGTH_IN_BYTES - 1] === OPS.OP_DROP
     );
 };
 

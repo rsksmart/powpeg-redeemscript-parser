@@ -1,10 +1,13 @@
 const redeemScriptParser = require('../index');
-const opcodes = require('bitcoinjs-lib').script.OPS;
-const script = require('bitcoinjs-lib').script;
 const expect = require('chai').expect;
 const { ERROR_MESSAGES, MAX_CSV_VALUE } = require('../constants');
 const rawRedeemScripts = require('./resources/test-redeem-scripts.json');
-const { signedNumberToHexStringLE, hexToDecimal, numberToHexString, decimalToOpCode } = require('../utils');
+const { OPS: opcodes, signedNumberToHexStringLE, hexToDecimal, numberToHexString, decimalToOpCode } = require('../utils');
+
+// Compiles a single push of an arbitrary-length buffer, for constructing
+// test-only script fixtures without a Bitcoin script-encoding dependency.
+// Only handles direct pushes (buffers under 76 bytes), which is all these tests need.
+const pushBuffer = (buffer) => Buffer.concat([Buffer.from([buffer.length]), buffer]);
 
 // Deterministic powpeg public keys (generated with seeds segwitFed1..3)
 const POWPEG_PUBLIC_KEYS = [
@@ -187,13 +190,13 @@ describe('flyover redeem scripts', () => {
         });
 
         it('returns false for scripts that are not flyover-shaped', () => {
-            // unparseable script (decompile returns null) and a script with fewer than 3 chunks
+            // too short to even contain the 34-byte prefix
             expect(redeemScriptParser.isFlyoverRedeemScript(Buffer.from('4c', 'hex'))).to.be.false;
             expect(redeemScriptParser.isFlyoverRedeemScript(Buffer.from('51', 'hex'))).to.be.false;
-            // 3+ chunks but the first push is not 32 bytes
-            expect(redeemScriptParser.isFlyoverRedeemScript(Buffer.from(script.compile([Buffer.alloc(20), opcodes.OP_DROP, opcodes.OP_NOTIF])))).to.be.false;
-            // 32-byte first push but the second chunk is not OP_DROP
-            expect(redeemScriptParser.isFlyoverRedeemScript(Buffer.from(script.compile([Buffer.alloc(32), opcodes.OP_NOTIF, opcodes.OP_NOTIF])))).to.be.false;
+            // first push is not 32 bytes
+            expect(redeemScriptParser.isFlyoverRedeemScript(Buffer.concat([pushBuffer(Buffer.alloc(20)), Buffer.from([opcodes.OP_DROP, opcodes.OP_NOTIF])]))).to.be.false;
+            // 32-byte first push, long enough, but the second chunk is not OP_DROP
+            expect(redeemScriptParser.isFlyoverRedeemScript(Buffer.concat([pushBuffer(Buffer.alloc(32)), Buffer.from([opcodes.OP_NOTIF, opcodes.OP_NOTIF])]))).to.be.false;
         });
     });
 
