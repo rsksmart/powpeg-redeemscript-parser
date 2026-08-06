@@ -12,8 +12,11 @@ const buildStandardMultiSigRedeemScript = (btcPublicKeys) => {
         .map(hex => hex instanceof Buffer ? hex: Buffer.from(hex, 'hex'))
         .sort((a, b) => a.compare(b));
 
-    const m = decimalToOpCode[parseInt(pubkeys.length / 2) + 1];
     const n = decimalToOpCode[pubkeys.length];
+    if (n === undefined) {
+        throw new Error(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
+    }
+    const m = decimalToOpCode[parseInt(pubkeys.length / 2) + 1];
 
     // OP_M <pushbyte(pubkey)>... OP_N OP_CHECKMULTISIG
     return Buffer.concat([
@@ -76,7 +79,7 @@ const buildPowpegRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue
     position+= emergencyRedeemScript.length / 2;
     redeemScript.write(numberToHexString(OPS.OP_ENDIF), position, 'hex');
 
-    return Buffer.from(redeemScript, 'hex');
+    return redeemScript;
 };
 
 /**
