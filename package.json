@@ -16,9 +16,6 @@
   "engines": {
     "node": ">=24.0.0"
   },
-  "dependencies": {
-    "bitcoinjs-lib": "7.0.1"
-  },
   "devDependencies": {
     "@rsksmart/rsk-precompiled-abis": "9.0.0-VETIVER",
     "chai": "5.2.0",
