@@ -162,7 +162,7 @@ describe('buildPowpegRedeemScript', () => {
 
     it('should return a valid redeem script for 20 public keys (max public key count)', () => {
         // N=20 falls outside OP_1..OP_16 and need the minimally-encoded data push
-        const powpegKeys = dummyPubKeys(17);
+        const powpegKeys = dummyPubKeys(20);
         const erpKeys = dummyPubKeys(4);
         const redeemScript = redeemScriptParser.buildPowpegRedeemScript(powpegKeys, erpKeys, ERP_CSV_VALUE);
         validateRedeemScriptFormat(redeemScript, powpegKeys, erpKeys, ERP_CSV_VALUE);
@@ -199,6 +199,8 @@ describe('buildFlyoverRedeemScript', () => {
         expect(() => redeemScriptParser.buildFlyoverRedeemScript(redeemScript, DERIVATION_HASH.substring(1))).to.throw(ERROR_MESSAGES.INVALID_DHASH);
         // a long hash
         expect(() => redeemScriptParser.buildFlyoverRedeemScript(redeemScript, DERIVATION_HASH.concat('1'))).to.throw(ERROR_MESSAGES.INVALID_DHASH);
+        // right length, but not valid hex
+        expect(() => redeemScriptParser.buildFlyoverRedeemScript(redeemScript, 'g'.repeat(64))).to.throw(ERROR_MESSAGES.INVALID_DHASH);
     });
 
     it('should return a valid flyover redeem script', () => {
@@ -213,7 +215,7 @@ describe('test raw RedeemScripts from file', () => {
         const testAndValidateRawRedeemScript = (rawRedeemScript) => {
             validateRedeemScriptFormat(Buffer.from(rawRedeemScript.script, 'hex'), rawRedeemScript.mainFed, rawRedeemScript.emergencyFed, rawRedeemScript.timelock);
             const powpegRedeemScript = redeemScriptParser.buildPowpegRedeemScript(rawRedeemScript.mainFed, rawRedeemScript.emergencyFed, rawRedeemScript.timelock).toString('hex');
-            return rawRedeemScript.script == powpegRedeemScript;
+            return rawRedeemScript.script === powpegRedeemScript;
         }
         expect(rawRedeemScripts.every(testAndValidateRawRedeemScript)).to.be.true;
     });

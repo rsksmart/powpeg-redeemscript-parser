@@ -25,7 +25,10 @@ const OPS = {
     OP_CHECKMULTISIG: 0xae
 };
 
-const numberToHexString = (number) => number.toString(16);
+// Zero-padded to an even length: Buffer#write(str, ..., 'hex') silently writes zero
+// bytes for odd-length hex instead of throwing, so an unpadded string here would
+// corrupt the redeem script instead of failing loudly.
+const numberToHexString = (number) => number.toString(16).padStart(2, '0');
 const hexToDecimal = hex => parseInt(hex, 16);
 
 const COUNT_OF_BITS_IN_BYTE = 8;

@@ -4,7 +4,7 @@
 
 # powpeg-redeemscript-parser
 
-This library helps obtaining the redeem script of the RSK powpeg as well as generating its address.
+This library helps building and parsing the redeem script of the RSK powpeg.
 
 ## Local usage
 
@@ -14,7 +14,7 @@ Run `node sample/sample.js` to get a full run of all the methods available in th
 
 ## Details
 
-The library offers methods to calculate each type of redeemscript available for the RSK powpeg. It also has a method to, given a redeemscript, get the powpeg address.
+The library offers methods to build each type of redeemscript available for the RSK powpeg, as well as to detect and remove the Flyover prefix from a redeemscript.
 
 ### buildPowpegRedeemScript
 
