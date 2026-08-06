@@ -2,7 +2,7 @@ const redeemScriptParser = require('../index');
 const expect = require('chai').expect;
 const { ERROR_MESSAGES, MAX_CSV_VALUE } = require('../constants');
 const rawRedeemScripts = require('./resources/test-redeem-scripts.json');
-const { OPS: opcodes, signedNumberToHexStringLE, hexToDecimal, numberToHexString, decimalToOpCode } = require('../utils');
+const { OPS: opcodes, signedNumberToHexStringLE, hexToDecimal, numberToHexString } = require('../utils');
 
 // Compiles a single push of an arbitrary-length buffer, for constructing
 // test-only script fixtures without a Bitcoin script-encoding dependency.
@@ -48,15 +48,16 @@ const checkPubKeysIncludedInRedeemScript = (pubKeys, redeemScript) => {
 // mirroring encodeMultisigNumber: a single OP_N opcode for 1-16, or a minimally-encoded
 // data push for 17-20 (there's no OP_17..OP_20). Returns the position after the chunk.
 const assertMultisigNumber = (redeemScript, position, num) => {
-    if (decimalToOpCode[num] !== undefined) {
-        expect(redeemScript.subarray(position, position + 1).toString('hex')).to.be.eq(numberToHexString(decimalToOpCode[num]));
+    if (num <= 16) {
+        // OP_1..OP_16 are 0x51..0x60
+        expect(redeemScript.subarray(position, position + 1).toString('hex'))
+            .to.be.eq((0x50 + num).toString(16));
         return position + 1;
     }
-    const hex = signedNumberToHexStringLE(num);
-    const byteLength = hex.length / 2;
-    expect(redeemScript.subarray(position, position + 1).toString('hex')).to.be.eq(byteLength.toString(16).padStart(2, '0'));
-    expect(redeemScript.subarray(position + 1, position + 1 + byteLength).toString('hex')).to.be.eq(hex);
-    return position + 1 + byteLength;
+    // 17-20: no opcode, so a 1-byte data push
+    expect(redeemScript.subarray(position, position + 2).toString('hex'))
+        .to.be.eq('01' + num.toString(16));
+    return position + 2;
 };
 
 const validateRedeemScriptFormat = (redeemScript, pubKeys, erpPubKeys, csvValue) => {
