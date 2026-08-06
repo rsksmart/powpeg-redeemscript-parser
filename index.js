@@ -1,6 +1,24 @@
 const { ERROR_MESSAGES, MAX_CSV_VALUE } = require('./constants');
 const { OPS, numberToHexString, decimalToOpCode, signedNumberToHexStringLE } = require('./utils');
 
+// OP_CHECKMULTISIG only supports up to 20 keys (MAX_PUBKEYS_PER_MULTISIG in Bitcoin Script).
+const MIN_MULTISIG_PUBLIC_KEYS_COUNT = 1;
+const MAX_MULTISIG_PUBLIC_KEYS_COUNT = 20;
+
+/**
+ * Encodes a multisig M or N value as a script chunk. There's no OP_17..OP_20 opcode,
+ * so 1-16 push a single OP_N opcode while 17-20 push the number as minimally-encoded data.
+ * @param {Number} num
+ * @returns {Buffer}
+ */
+const encodeMultisigNumber = (num) => {
+    if (decimalToOpCode[num] !== undefined) {
+        return Buffer.from([decimalToOpCode[num]]);
+    }
+    const hex = signedNumberToHexStringLE(num);
+    return Buffer.concat([Buffer.from([hex.length / 2]), Buffer.from(hex, 'hex')]);
+};
+
 /**
  *
  * @param {String[] | Buffer[]} btcPublicKeys
@@ -12,17 +30,19 @@ const buildStandardMultiSigRedeemScript = (btcPublicKeys) => {
         .map(hex => hex instanceof Buffer ? hex: Buffer.from(hex, 'hex'))
         .sort((a, b) => a.compare(b));
 
-    const n = decimalToOpCode[pubkeys.length];
-    if (n === undefined) {
+    if (pubkeys.length < MIN_MULTISIG_PUBLIC_KEYS_COUNT || pubkeys.length > MAX_MULTISIG_PUBLIC_KEYS_COUNT) {
         throw new Error(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
     }
-    const m = decimalToOpCode[parseInt(pubkeys.length / 2) + 1];
+
+    const m = parseInt(pubkeys.length / 2) + 1;
+    const n = pubkeys.length;
 
     // OP_M <pushbyte(pubkey)>... OP_N OP_CHECKMULTISIG
     return Buffer.concat([
-        Buffer.from([m]),
+        encodeMultisigNumber(m),
         ...pubkeys.map(pubkey => Buffer.concat([Buffer.from([pubkey.length]), pubkey])),
-        Buffer.from([n, OPS.OP_CHECKMULTISIG])
+        encodeMultisigNumber(n),
+        Buffer.from([OPS.OP_CHECKMULTISIG])
     ]);
 };
 

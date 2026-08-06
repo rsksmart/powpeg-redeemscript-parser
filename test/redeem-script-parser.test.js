@@ -10,7 +10,7 @@ const { OPS: opcodes, signedNumberToHexStringLE, hexToDecimal, numberToHexString
 const pushBuffer = (buffer) => Buffer.concat([Buffer.from([buffer.length]), buffer]);
 
 // Deterministic compressed-pubkey-shaped (33-byte) hex strings, for exercising the
-// 1-16 public key count boundary. buildStandardMultiSigRedeemScript only checks
+// 1-20 public key count boundary. buildStandardMultiSigRedeemScript only checks
 // count and length here, not whether they're real EC points.
 const dummyPubKeys = (count) => Array.from(
     { length: count },
@@ -44,17 +44,32 @@ const checkPubKeysIncludedInRedeemScript = (pubKeys, redeemScript) => {
     }
 };
 
-const validateRedeemScriptFormat = (redeemScript, pubKeys, erpPubKeys, csvValue) => {
-    const OP_M = decimalToOpCode[parseInt(pubKeys.length / 2) + 1];
-    const OP_N = decimalToOpCode[pubKeys.length];
+// Asserts that redeemScript encodes `num` (a multisig M or N value) starting at `position`,
+// mirroring encodeMultisigNumber: a single OP_N opcode for 1-16, or a minimally-encoded
+// data push for 17-20 (there's no OP_17..OP_20). Returns the position after the chunk.
+const assertMultisigNumber = (redeemScript, position, num) => {
+    if (decimalToOpCode[num] !== undefined) {
+        expect(redeemScript.subarray(position, position + 1).toString('hex')).to.be.eq(numberToHexString(decimalToOpCode[num]));
+        return position + 1;
+    }
+    const hex = signedNumberToHexStringLE(num);
+    const byteLength = hex.length / 2;
+    expect(redeemScript.subarray(position, position + 1).toString('hex')).to.be.eq(byteLength.toString(16).padStart(2, '0'));
+    expect(redeemScript.subarray(position + 1, position + 1 + byteLength).toString('hex')).to.be.eq(hex);
+    return position + 1 + byteLength;
+};
 
-    const ERP_OP_M = decimalToOpCode[parseInt(erpPubKeys.length / 2) + 1];
-    const ERP_OP_N = decimalToOpCode[erpPubKeys.length];
+const validateRedeemScriptFormat = (redeemScript, pubKeys, erpPubKeys, csvValue) => {
+    const M = parseInt(pubKeys.length / 2) + 1;
+    const N = pubKeys.length;
+
+    const ERP_M = parseInt(erpPubKeys.length / 2) + 1;
+    const ERP_N = erpPubKeys.length;
 
     let position = 1;
     //  First byte is OP_NOTIF
     expect(redeemScript.subarray(0, position).toString('hex')).to.be.eq(numberToHexString(opcodes.OP_NOTIF));
-    expect(redeemScript.subarray(position, ++position).toString('hex')).to.be.eq(numberToHexString(OP_M));
+    position = assertMultisigNumber(redeemScript, position, M);
 
     // Check Publickeys in redeem script
     for (let i = 0; i < pubKeys.length; i++) {
@@ -65,7 +80,7 @@ const validateRedeemScriptFormat = (redeemScript, pubKeys, erpPubKeys, csvValue)
         position = position + pubKeyLength;
     }
 
-    expect(redeemScript.subarray(position, ++position).toString('hex')).to.be.eq(numberToHexString(OP_N));
+    position = assertMultisigNumber(redeemScript, position, N);
     expect(redeemScript.subarray(position, ++position).toString('hex')).to.be.eq(numberToHexString(opcodes.OP_CHECKMULTISIG));
     expect(redeemScript.subarray(position, ++position).toString('hex')).to.be.eq(numberToHexString(opcodes.OP_ELSE));
     const csvValuePushBytes = signedNumberToHexStringLE(csvValue).length / 2;
@@ -75,7 +90,7 @@ const validateRedeemScriptFormat = (redeemScript, pubKeys, erpPubKeys, csvValue)
     position = csvValueOffset;
     expect(redeemScript.subarray(position, ++position).toString('hex')).to.be.eq(numberToHexString(opcodes.OP_CHECKSEQUENCEVERIFY));
     expect(redeemScript.subarray(position, ++position).toString('hex')).to.be.eq(numberToHexString(opcodes.OP_DROP));
-    expect(redeemScript.subarray(position, ++position).toString('hex')).to.be.eq(numberToHexString(ERP_OP_M));
+    position = assertMultisigNumber(redeemScript, position, ERP_M);
 
     // Check ERP Publickeys in redeem script
     for (let i = 0; i < erpPubKeys.length; i++) {
@@ -86,7 +101,7 @@ const validateRedeemScriptFormat = (redeemScript, pubKeys, erpPubKeys, csvValue)
         position = position + pubKeyLength;
     }
 
-    expect(redeemScript.subarray(position, ++position).toString('hex')).to.be.eq(numberToHexString(ERP_OP_N));
+    position = assertMultisigNumber(redeemScript, position, ERP_N);
     expect(redeemScript.subarray(position, ++position).toString('hex')).to.be.eq(numberToHexString(opcodes.OP_CHECKMULTISIG));
     //  Last byte is OP_ENDIF
     expect(redeemScript.subarray(position, ++position).toString('hex')).to.be.eq(numberToHexString(opcodes.OP_ENDIF));
@@ -121,17 +136,33 @@ describe('buildPowpegRedeemScript', () => {
     it('fails for an invalid public key count', () => {
         // fails because there are no powpeg public keys
         expect(() => redeemScriptParser.buildPowpegRedeemScript([], ERP_PUBKEYS, ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
-        // fails because there are too many powpeg public keys
-        expect(() => redeemScriptParser.buildPowpegRedeemScript(dummyPubKeys(17), ERP_PUBKEYS, ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
+        // fails because there are too many powpeg public keys (OP_CHECKMULTISIG caps at 20)
+        expect(() => redeemScriptParser.buildPowpegRedeemScript(dummyPubKeys(21), ERP_PUBKEYS, ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
         // fails because there are no erp public keys
         expect(() => redeemScriptParser.buildPowpegRedeemScript(POWPEG_PUBLIC_KEYS, [], ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
         // fails because there are too many erp public keys
-        expect(() => redeemScriptParser.buildPowpegRedeemScript(POWPEG_PUBLIC_KEYS, dummyPubKeys(17), ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
+        expect(() => redeemScriptParser.buildPowpegRedeemScript(POWPEG_PUBLIC_KEYS, dummyPubKeys(21), ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
     });
 
     it('should return a valid redeem script at the 16 public key boundary', () => {
         const powpegKeys = dummyPubKeys(16);
         const erpKeys = dummyPubKeys(16);
+        const redeemScript = redeemScriptParser.buildPowpegRedeemScript(powpegKeys, erpKeys, ERP_CSV_VALUE);
+        validateRedeemScriptFormat(redeemScript, powpegKeys, erpKeys, ERP_CSV_VALUE);
+    });
+
+    it('should return a valid redeem script for 17 public keys (no single-opcode N encoding above 16)', () => {
+        // N=17 falls outside OP_1..OP_16 and need the minimally-encoded data push
+        const powpegKeys = dummyPubKeys(17);
+        const erpKeys = dummyPubKeys(4);
+        const redeemScript = redeemScriptParser.buildPowpegRedeemScript(powpegKeys, erpKeys, ERP_CSV_VALUE);
+        validateRedeemScriptFormat(redeemScript, powpegKeys, erpKeys, ERP_CSV_VALUE);
+    });
+
+    it('should return a valid redeem script for 20 public keys (max public key count)', () => {
+        // N=20 falls outside OP_1..OP_16 and need the minimally-encoded data push
+        const powpegKeys = dummyPubKeys(17);
+        const erpKeys = dummyPubKeys(4);
         const redeemScript = redeemScriptParser.buildPowpegRedeemScript(powpegKeys, erpKeys, ERP_CSV_VALUE);
         validateRedeemScriptFormat(redeemScript, powpegKeys, erpKeys, ERP_CSV_VALUE);
     });
