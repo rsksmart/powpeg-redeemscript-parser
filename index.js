@@ -1,36 +1,57 @@
-const bitcoin = require('bitcoinjs-lib');
-const { NETWORKS, ERROR_MESSAGES, MAX_CSV_VALUE } = require('./constants');
-const { numberToHexString, isValidNetwork, signedNumberToHexStringLE } = require('./utils');
+const { ERROR_MESSAGES, MAX_CSV_VALUE } = require('./constants');
+const { OPS, numberToHexString, decimalToOpCode, isValidHex, signedNumberToHexStringLE } = require('./utils');
 
-const bitcoinjsNetworks = {};
-
-bitcoinjsNetworks[NETWORKS.MAINNET] = bitcoin.networks.bitcoin;
-bitcoinjsNetworks[NETWORKS.TESTNET] = bitcoin.networks.testnet;
-bitcoinjsNetworks[NETWORKS.REGTEST] = bitcoin.networks.regtest;
+// OP_CHECKMULTISIG only supports up to 20 keys (MAX_PUBKEYS_PER_MULTISIG in Bitcoin Script).
+const MIN_MULTISIG_PUBLIC_KEYS_COUNT = 1;
+const MAX_MULTISIG_PUBLIC_KEYS_COUNT = 20;
 
 /**
- * 
- * @param {String[] | Buffer[]} powpegBtcPublicKeys 
+ * Encodes a multisig M or N value as a script chunk. There's no OP_17..OP_20 opcode,
+ * so 1-16 push a single OP_N opcode while 17-20 push the number as minimally-encoded data.
+ * @param {Number} num
  * @returns {Buffer}
  */
-const getPowpegRedeemScript = (powpegBtcPublicKeys) => {
-    if (!Array.isArray(powpegBtcPublicKeys)) {
-        throw new Error(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
+const encodeMultisigNumber = (num) => {
+    if (decimalToOpCode[num] !== undefined) {
+        return Buffer.from([decimalToOpCode[num]]);
     }
-    return getRedeemScriptFromBtcPublicKeys(powpegBtcPublicKeys);
+    const hex = signedNumberToHexStringLE(num);
+    return Buffer.concat([Buffer.from([hex.length / 2]), Buffer.from(hex, 'hex')]);
 };
 
 /**
- * 
- * @param {String[] | Buffer[]} btcPublicKeys 
+ *
+ * @param {String[] | Buffer[]} btcPublicKeys
  * @returns {Buffer}
  */
-const getRedeemScriptFromBtcPublicKeys = (btcPublicKeys) => {
+const buildStandardMultiSigRedeemScript = (btcPublicKeys) => {
     // Parse to Buffer and sort keys
-    const defaultPubkeys = btcPublicKeys
-        .map(hex => hex instanceof Buffer ? hex: Buffer.from(hex, 'hex'))
+    const pubkeys = btcPublicKeys
+        .map(hex => {
+            if (Buffer.isBuffer(hex)) {
+                return hex;
+            }
+            if (!isValidHex(hex)) {
+                throw new Error(ERROR_MESSAGES.INVALID_PUBLIC_KEY_FORMAT);
+            }
+            return Buffer.from(hex, 'hex');
+        })
         .sort((a, b) => a.compare(b));
-    return bitcoin.payments.p2ms({ m: parseInt(defaultPubkeys.length / 2) + 1, pubkeys: defaultPubkeys }).output;
+
+    if (pubkeys.length < MIN_MULTISIG_PUBLIC_KEYS_COUNT || pubkeys.length > MAX_MULTISIG_PUBLIC_KEYS_COUNT) {
+        throw new Error(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
+    }
+
+    const m = parseInt(pubkeys.length / 2) + 1;
+    const n = pubkeys.length;
+
+    // OP_M <pushbyte(pubkey)>... OP_N OP_CHECKMULTISIG
+    return Buffer.concat([
+        encodeMultisigNumber(m),
+        ...pubkeys.map(pubkey => Buffer.concat([Buffer.from([pubkey.length]), pubkey])),
+        encodeMultisigNumber(n),
+        Buffer.from([OPS.OP_CHECKMULTISIG])
+    ]);
 };
 
 /**
@@ -40,13 +61,12 @@ const getRedeemScriptFromBtcPublicKeys = (btcPublicKeys) => {
  * @param {Number} csvValue 
  * @returns {Buffer}
  */
-const getP2shErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue) => {
-
+const buildPowpegRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue) => {
     if (!Array.isArray(powpegBtcPublicKeys)) {
         throw new Error(ERROR_MESSAGES.INVALID_POWPEG_PUBLIC_KEYS);
     }
     if (!Array.isArray(erpBtcPublicKeys)) {
-        throw new Error(ERROR_MESSAGES.INVALID_P2SH_ERP_PUBLIC_KEYS);
+        throw new Error(ERROR_MESSAGES.INVALID_EMERGENCY_PUBLIC_KEYS);
     }
 
     if (!Number.isInteger(csvValue) || csvValue < 1 || csvValue > MAX_CSV_VALUE) {
@@ -55,8 +75,8 @@ const getP2shErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue)
 
     const csvLEHexValue = signedNumberToHexStringLE(csvValue);
 
-    const defaultRedeemScript = getRedeemScriptFromBtcPublicKeys(powpegBtcPublicKeys).toString('hex');
-    const emergencyRedeemScript = getRedeemScriptFromBtcPublicKeys(erpBtcPublicKeys).toString('hex');
+    const defaultRedeemScript = buildStandardMultiSigRedeemScript(powpegBtcPublicKeys).toString('hex');
+    const emergencyRedeemScript = buildStandardMultiSigRedeemScript(erpBtcPublicKeys).toString('hex');
 
     const bufferLength = parseInt(
         1 + 
@@ -70,24 +90,24 @@ const getP2shErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue)
 
     const redeemScript = Buffer.alloc(bufferLength);
 
-    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_NOTIF), 'hex');
+    redeemScript.write(numberToHexString(OPS.OP_NOTIF), 'hex');
     redeemScript.write(defaultRedeemScript, 1, 'hex');
     let position = 1 + parseInt(defaultRedeemScript.length / 2);
-    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ELSE), position, 'hex');
+    redeemScript.write(numberToHexString(OPS.OP_ELSE), position, 'hex');
     position+= 1;
     redeemScript.write(`0${csvLEHexValue.length / 2}`, position, 'hex'); // OP_PUSHBYTES
     position+= 1;
     redeemScript.write(csvLEHexValue, position, 'hex');
     position+= csvLEHexValue.length / 2;
-    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_CHECKSEQUENCEVERIFY), position, 'hex');
+    redeemScript.write(numberToHexString(OPS.OP_CHECKSEQUENCEVERIFY), position, 'hex');
     position+= 1;
-    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_DROP), position, 'hex');
+    redeemScript.write(numberToHexString(OPS.OP_DROP), position, 'hex');
     position+= 1;
     redeemScript.write(emergencyRedeemScript, position, 'hex');
     position+= emergencyRedeemScript.length / 2;
-    redeemScript.write(numberToHexString(bitcoin.script.OPS.OP_ENDIF), position, 'hex');
+    redeemScript.write(numberToHexString(OPS.OP_ENDIF), position, 'hex');
 
-    return Buffer.from(redeemScript, 'hex');
+    return redeemScript;
 };
 
 /**
@@ -95,14 +115,14 @@ const getP2shErpRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue)
  * @param {String} derivationArgsHash 
  * @returns {Buffer}
  */
-const getFlyoverPrefix = (derivationArgsHash) => {
-    if (!derivationArgsHash || derivationArgsHash.length !== 64) {
+const buildFlyoverPrefix = (derivationArgsHash) => {
+    if (!isValidHex(derivationArgsHash) || derivationArgsHash.length !== 64) {
         throw new Error(ERROR_MESSAGES.INVALID_DHASH);
     }
     const prefix = Buffer.alloc(34);
     prefix.write('20', 'hex'); // hash length
     prefix.write(derivationArgsHash, 1, 'hex');
-    prefix.write(numberToHexString(bitcoin.script.OPS.OP_DROP), prefix.length - 1, 'hex'); // DROP the hash
+    prefix.write(numberToHexString(OPS.OP_DROP), prefix.length - 1, 'hex'); // DROP the hash
 
     return prefix;
 };
@@ -113,63 +133,57 @@ const getFlyoverPrefix = (derivationArgsHash) => {
  * @param {String} derivationArgsHash 
  * @returns {Buffer}
  */
-const getFlyoverRedeemScript = (powpegRedeemScript, derivationArgsHash) => {
+const buildFlyoverRedeemScript = (powpegRedeemScript, derivationArgsHash) => {
     if (!Buffer.isBuffer(powpegRedeemScript)) {
-        throw new Error(ERROR_MESSAGES.INVALID_POWPEG_REDEEM_SCRIPT);
+        throw new Error(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
     }
     
     return Buffer.concat([
-        getFlyoverPrefix(derivationArgsHash), 
+        buildFlyoverPrefix(derivationArgsHash), 
         powpegRedeemScript
     ]);
 };
 
-/**
- * 
- * @param {NETWORKS} network 
- * @param {Buffer} redeemScript 
- * @returns {String}
- */
-const getAddressFromRedeemScript = (network, redeemScript) => {
-    isValidNetwork(network);
+// Flyover prefix: OP_PUSHBYTES_32 (1) + 32-byte derivation hash + OP_DROP (1)
+const FLYOVER_PREFIX_LENGTH_IN_BYTES = 34;
+const OP_PUSHBYTES_32 = 0x20;
 
+/**
+ * Checks whether a redeem script is a flyover redeem script, i.e. a powpeg redeem script prefixed
+ * with OP_PUSHBYTES_32 <derivationHash> OP_DROP.
+ * @param {Buffer} redeemScript
+ * @returns {Boolean}
+ */
+const isFlyoverRedeemScript = (redeemScript) => {
     if (!Buffer.isBuffer(redeemScript)) {
         throw new Error(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
     }
 
-    const doubleHash = bitcoin.crypto.ripemd160(bitcoin.crypto.sha256(redeemScript));
-    return bitcoin.address.toBase58Check(doubleHash, bitcoinjsNetworks[network].scriptHash);
+    // Must have at least one more byte after the prefix - a bare
+    // "<hash> OP_DROP" with nothing left to guard is not a flyover script.
+    return (
+        redeemScript.length > FLYOVER_PREFIX_LENGTH_IN_BYTES &&
+        redeemScript[0] === OP_PUSHBYTES_32 &&
+        redeemScript[FLYOVER_PREFIX_LENGTH_IN_BYTES - 1] === OPS.OP_DROP
+    );
 };
 
 /**
- * 
- * @param {NETWORKS} network 
- * @param {Buffer} redeemScript 
- * @returns {String}
+ * Removes the flyover prefix (OP_PUSHBYTES_32 <derivationHash> OP_DROP) from a flyover redeem script,
+ * returning the underlying powpeg redeem script.
+ * @param {Buffer} redeemScript
+ * @returns {Buffer}
  */
-const getP2shP2wshAddressFromRedeemScript = (network, redeemScript) => {
-    isValidNetwork(network);
-
-    if (!Buffer.isBuffer(redeemScript)) {
-        throw new Error(ERROR_MESSAGES.INVALID_REDEEM_SCRIPT);
+const removeFlyoverPrefix = (redeemScript) => {
+    if (!isFlyoverRedeemScript(redeemScript)) {
+        throw new Error(ERROR_MESSAGES.NOT_A_FLYOVER_REDEEM_SCRIPT);
     }
-
-    const payment = bitcoin.payments.p2sh({
-        redeem: bitcoin.payments.p2wsh({
-            redeem: { output: redeemScript },
-            network: bitcoinjsNetworks[network]
-        }),
-        network: bitcoinjsNetworks[network]
-    });
-
-    return payment.address;
+    return redeemScript.slice(FLYOVER_PREFIX_LENGTH_IN_BYTES);
 };
 
 module.exports = {
-    getPowpegRedeemScript,
-    getP2shErpRedeemScript,
-    getFlyoverRedeemScript,
-    getAddressFromRedeemScript,
-    getP2shP2wshAddressFromRedeemScript,
-    NETWORKS: NETWORKS
+    buildPowpegRedeemScript,
+    buildFlyoverRedeemScript,
+    isFlyoverRedeemScript,
+    removeFlyoverPrefix
 };
