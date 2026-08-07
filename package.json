@@ -20,7 +20,7 @@
     "@rsksmart/rsk-precompiled-abis": "9.0.0-VETIVER",
     "chai": "5.2.0",
     "mocha": "11.6.0",
-    "nyc": "17.1.0",
+    "nyc": "18.0.0",
     "ethers": "6.17.0"
   }
 }
