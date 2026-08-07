@@ -1,5 +1,5 @@
 const { ERROR_MESSAGES, MAX_CSV_VALUE } = require('./constants');
-const { OPS, numberToHexString, decimalToOpCode, signedNumberToHexStringLE } = require('./utils');
+const { OPS, numberToHexString, decimalToOpCode, isValidHex, signedNumberToHexStringLE } = require('./utils');
 
 // OP_CHECKMULTISIG only supports up to 20 keys (MAX_PUBKEYS_PER_MULTISIG in Bitcoin Script).
 const MIN_MULTISIG_PUBLIC_KEYS_COUNT = 1;
@@ -27,7 +27,15 @@ const encodeMultisigNumber = (num) => {
 const buildStandardMultiSigRedeemScript = (btcPublicKeys) => {
     // Parse to Buffer and sort keys
     const pubkeys = btcPublicKeys
-        .map(hex => hex instanceof Buffer ? hex: Buffer.from(hex, 'hex'))
+        .map(hex => {
+            if (Buffer.isBuffer(hex)) {
+                return hex;
+            }
+            if (!isValidHex(hex)) {
+                throw new Error(ERROR_MESSAGES.INVALID_PUBLIC_KEY_FORMAT);
+            }
+            return Buffer.from(hex, 'hex');
+        })
         .sort((a, b) => a.compare(b));
 
     if (pubkeys.length < MIN_MULTISIG_PUBLIC_KEYS_COUNT || pubkeys.length > MAX_MULTISIG_PUBLIC_KEYS_COUNT) {
@@ -108,7 +116,7 @@ const buildPowpegRedeemScript = (powpegBtcPublicKeys, erpBtcPublicKeys, csvValue
  * @returns {Buffer}
  */
 const buildFlyoverPrefix = (derivationArgsHash) => {
-    if (!derivationArgsHash || derivationArgsHash.length !== 64) {
+    if (!isValidHex(derivationArgsHash) || derivationArgsHash.length !== 64) {
         throw new Error(ERROR_MESSAGES.INVALID_DHASH);
     }
     const prefix = Buffer.alloc(34);

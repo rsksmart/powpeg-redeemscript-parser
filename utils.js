@@ -31,6 +31,11 @@ const OPS = {
 const numberToHexString = (number) => number.toString(16).padStart(2, '0');
 const hexToDecimal = hex => parseInt(hex, 16);
 
+// Buffer.from(str, 'hex') and Buffer#write(str, ..., 'hex') both silently stop at the
+// first invalid character instead of throwing, so any hex string from outside the
+// library must be validated with this before being trusted.
+const isValidHex = (value) => typeof value === 'string' && value.length > 0 && value.length % 2 === 0 && /^[0-9a-fA-F]+$/.test(value);
+
 const COUNT_OF_BITS_IN_BYTE = 8;
 const ONE_BYTE_MASK = 0xFF;
 const ONE_BIT_MASK = 0x01;
@@ -91,6 +96,7 @@ module.exports = {
     OPS,
     numberToHexString,
     hexToDecimal,
+    isValidHex,
     decimalToOpCode,
     signedNumberToHexStringLE
 }

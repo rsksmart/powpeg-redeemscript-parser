@@ -2,7 +2,7 @@ const redeemScriptParser = require('../index');
 const expect = require('chai').expect;
 const { ERROR_MESSAGES, MAX_CSV_VALUE } = require('../constants');
 const rawRedeemScripts = require('./resources/test-redeem-scripts.json');
-const { OPS: opcodes, signedNumberToHexStringLE, hexToDecimal, numberToHexString } = require('../utils');
+const { OPS: opcodes, signedNumberToHexStringLE, hexToDecimal, numberToHexString, isValidHex } = require('../utils');
 
 // Compiles a single push of an arbitrary-length buffer, for constructing
 // test-only script fixtures without a Bitcoin script-encoding dependency.
@@ -145,6 +145,17 @@ describe('buildPowpegRedeemScript', () => {
         expect(() => redeemScriptParser.buildPowpegRedeemScript(POWPEG_PUBLIC_KEYS, dummyPubKeys(21), ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEYS_COUNT);
     });
 
+    it('fails for an invalid public key format', () => {
+        // fails because a powpeg public key contains non-hex characters
+        expect(() => redeemScriptParser.buildPowpegRedeemScript(['not-hex'], ERP_PUBKEYS, ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEY_FORMAT);
+        // fails because a powpeg public key has an odd hex length
+        expect(() => redeemScriptParser.buildPowpegRedeemScript(['abc'], ERP_PUBKEYS, ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEY_FORMAT);
+        // fails because a powpeg public key is an empty string
+        expect(() => redeemScriptParser.buildPowpegRedeemScript([''], ERP_PUBKEYS, ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEY_FORMAT);
+        // fails because an erp public key contains non-hex characters
+        expect(() => redeemScriptParser.buildPowpegRedeemScript(POWPEG_PUBLIC_KEYS, ['not-hex'], ERP_CSV_VALUE)).to.throw(ERROR_MESSAGES.INVALID_PUBLIC_KEY_FORMAT);
+    });
+
     it('should return a valid redeem script at the 16 public key boundary', () => {
         const powpegKeys = dummyPubKeys(16);
         const erpKeys = dummyPubKeys(16);
@@ -229,6 +240,23 @@ describe('test numberToHexStringLE utility method', () => {
         for (let i = 0; i < numbersArray.length; i++) {
             expect(signedNumberToHexStringLE(numbersArray[i])).to.be.eq(expectedNumbersInHexStringLE[i]);
         }
+    });
+});
+
+describe('test isValidHex utility method', () => {
+    it('returns true for valid hex strings', () => {
+        expect(isValidHex('ab')).to.be.true;
+        expect(isValidHex('deadbeef')).to.be.true;
+        expect(isValidHex('DEADBEEF')).to.be.true;
+    });
+
+    it('returns false for invalid input', () => {
+        expect(isValidHex('')).to.be.false;
+        expect(isValidHex('a')).to.be.false; // odd length
+        expect(isValidHex('zz')).to.be.false; // non-hex characters
+        expect(isValidHex(null)).to.be.false;
+        expect(isValidHex(undefined)).to.be.false;
+        expect(isValidHex(1234)).to.be.false; // not a string
     });
 });
 
